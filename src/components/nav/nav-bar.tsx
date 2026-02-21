@@ -7,7 +7,11 @@ export function NavBar() {
         <Link href="/dashboard" className="flex items-end gap-0.5">
           <span
             className="text-xl tracking-tight text-[#7E6FAE]"
+<<<<<<< Updated upstream
             style={{ fontFamily: "var(--font-dm-serif)" }}
+=======
+            style={{ fontFamily: "var(--font-maitree)" }}
+>>>>>>> Stashed changes
           >
             Cognify
           </span>
