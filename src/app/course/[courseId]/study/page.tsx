@@ -6,7 +6,7 @@ import { StudySession } from "~/components/quiz/study-session";
 
 type Props = {
   params: Promise<{ courseId: string }>;
-  searchParams: Promise<{ modules?: string }>;
+  searchParams: Promise<{ files?: string; pages?: string }>;
 };
 
 export default async function StudyPage({ params, searchParams }: Props) {
@@ -16,25 +16,30 @@ export default async function StudyPage({ params, searchParams }: Props) {
   }
 
   const { courseId } = await params;
-  const { modules } = await searchParams;
+  const { files, pages } = await searchParams;
   const courseIdNum = parseInt(courseId, 10);
-  const moduleIds = (modules ?? "")
+
+  const fileIds = (files ?? "")
     .split(",")
     .map(Number)
     .filter((n) => !isNaN(n) && n > 0);
 
-  if (moduleIds.length === 0) {
+  const pageUrls = (pages ?? "")
+    .split(",")
+    .filter((s) => s.length > 0);
+
+  if (fileIds.length === 0 && pageUrls.length === 0) {
     return (
       <>
         <NavBar />
         <main className="min-h-screen bg-gray-50 p-8">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-gray-500">No modules selected.</p>
+            <p className="mb-4 text-gray-500">No content selected.</p>
             <Link
               href={`/course/${courseId}`}
               className="text-blue-600 hover:underline"
             >
-              Go back and select modules
+              Go back and select files or pages
             </Link>
           </div>
         </main>
@@ -51,10 +56,14 @@ export default async function StudyPage({ params, searchParams }: Props) {
             href={`/course/${courseId}`}
             className="mb-6 inline-block text-sm text-blue-600 hover:underline"
           >
-            &larr; Back to modules
+            &larr; Back to content
           </Link>
 
-          <StudySession courseId={courseIdNum} moduleIds={moduleIds} />
+          <StudySession
+            courseId={courseIdNum}
+            fileIds={fileIds}
+            pageUrls={pageUrls}
+          />
         </div>
       </main>
     </>

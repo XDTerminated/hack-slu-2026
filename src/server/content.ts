@@ -1,32 +1,176 @@
-import { getModuleItems, getPage } from "./canvas";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse/lib/pdf-parse") as (
+  buffer: Buffer,
+) => Promise<{ text: string }>;
+import { getFile, downloadFile, getPage } from "./canvas";
 import { htmlToText } from "~/utils/html-to-text";
+import {
+  extractLinks,
+  getGoogleDriveDownloadUrl,
+  isDirectFileUrl,
+} from "~/utils/extract-links";
 
-export async function fetchModuleContent(
+export async function fetchSelectedContent(
   token: string,
   courseId: number,
-  moduleIds: number[],
+  fileIds: number[],
+  pageUrls: string[],
 ): Promise<string> {
-  const allText: string[] = [];
+  const results = await Promise.all([
+    ...fileIds.map((id) => extractFileById(token, id)),
+    ...pageUrls.map((url) => extractPageWithLinks(token, courseId, url)),
+  ]);
 
-  for (const moduleId of moduleIds) {
-    const items = await getModuleItems(token, courseId, moduleId);
-    const pageItems = items.filter(
-      (item) => item.type === "Page" && item.page_url,
+  return results
+    .flat()
+    .filter(Boolean)
+    .join("\n\n---\n\n");
+}
+
+// --- Canvas file extraction ---
+
+async function extractFileById(
+  token: string,
+  fileId: number,
+): Promise<string> {
+  try {
+    const file = await getFile(token, fileId);
+    return await extractFromContentType(
+      file.display_name,
+      file["content-type"],
+      () => downloadFile(token, file.url),
+    );
+  } catch {
+    return "";
+  }
+}
+
+// --- Page extraction + follow embedded links ---
+
+async function extractPageWithLinks(
+  token: string,
+  courseId: number,
+  pageUrl: string,
+): Promise<string[]> {
+  try {
+    const page = await getPage(token, courseId, pageUrl);
+    if (!page.body) return [];
+
+    const pageText = `## ${page.title}\n\n${htmlToText(page.body)}`;
+
+    // Find all links in the page HTML and fetch their content
+    const links = extractLinks(page.body);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
     );
 
-    const pageTexts = await Promise.all(
-      pageItems.map(async (item) => {
-        try {
-          const page = await getPage(token, courseId, item.page_url!);
-          return `## ${page.title}\n\n${htmlToText(page.body)}`;
-        } catch {
-          return "";
-        }
-      }),
-    );
+    return [pageText, ...linkTexts.filter(Boolean)];
+  } catch {
+    return [];
+  }
+}
 
-    allText.push(...pageTexts.filter(Boolean));
+// --- External link extraction (Google Drive, direct files) ---
+
+async function extractFromExternalLink(url: string): Promise<string> {
+  try {
+    // Google Drive / Google Docs link
+    const gdriveUrl = getGoogleDriveDownloadUrl(url);
+    if (gdriveUrl) {
+      return await fetchAndExtract(gdriveUrl, url);
+    }
+
+    // Direct file link (.pdf, .txt, etc.)
+    if (isDirectFileUrl(url)) {
+      return await fetchAndExtract(url, url);
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+async function fetchAndExtract(
+  downloadUrl: string,
+  originalUrl: string,
+): Promise<string> {
+  try {
+    const res = await fetch(downloadUrl, {
+      redirect: "follow",
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return "";
+
+    const contentType = res.headers.get("content-type") ?? "";
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const label = labelFromUrl(originalUrl);
+
+    if (contentType.includes("pdf") || downloadUrl.endsWith(".pdf")) {
+      const pdf = await pdfParse(buffer);
+      return pdf.text ? `## ${label}\n\n${pdf.text}` : "";
+    }
+
+    if (contentType.includes("html")) {
+      const text = htmlToText(buffer.toString("utf-8"));
+      return text ? `## ${label}\n\n${text}` : "";
+    }
+
+    if (
+      contentType.startsWith("text/") ||
+      contentType.includes("json") ||
+      contentType.includes("rtf")
+    ) {
+      const text = buffer.toString("utf-8");
+      return text ? `## ${label}\n\n${text}` : "";
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+// --- Helpers ---
+
+async function extractFromContentType(
+  name: string,
+  contentType: string,
+  download: () => Promise<Buffer>,
+): Promise<string> {
+  if (contentType === "application/pdf") {
+    const buffer = await download();
+    const pdf = await pdfParse(buffer);
+    return `## ${name}\n\n${pdf.text}`;
   }
 
-  return allText.join("\n\n---\n\n");
+  if (
+    contentType.startsWith("text/") ||
+    contentType === "application/json" ||
+    contentType === "application/rtf"
+  ) {
+    const buffer = await download();
+    return `## ${name}\n\n${buffer.toString("utf-8")}`;
+  }
+
+  if (contentType.includes("html")) {
+    const buffer = await download();
+    return `## ${name}\n\n${htmlToText(buffer.toString("utf-8"))}`;
+  }
+
+  return "";
+}
+
+function labelFromUrl(url: string): string {
+  try {
+    const pathname = new URL(url).pathname;
+    const segments = pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (last && last !== "view" && last !== "edit") {
+      return decodeURIComponent(last).replace(/[_-]/g, " ");
+    }
+    return segments[segments.length - 2] ?? "Linked File";
+  } catch {
+    return "Linked File";
+  }
 }
