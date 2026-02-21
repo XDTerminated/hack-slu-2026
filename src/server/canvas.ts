@@ -45,12 +45,35 @@ export type ModuleItem = {
   content_id?: number;
   page_url?: string;
   url?: string;
+  external_url?: string;
 };
 
 export type Page = {
+  page_id: number;
   title: string;
   body: string;
   url: string;
+};
+
+export type PageSummary = {
+  page_id: number;
+  title: string;
+  url: string;
+};
+
+export type CanvasFile = {
+  id: number;
+  display_name: string;
+  filename: string;
+  url: string;
+  size: number;
+  "content-type": string;
+};
+
+export type Assignment = {
+  id: number;
+  name: string;
+  description: string | null;
 };
 
 // --- API Functions ---
@@ -91,5 +114,56 @@ export async function getPage(
   return canvasFetch<Page>(
     token,
     `/api/v1/courses/${courseId}/pages/${pageUrl}`,
+  );
+}
+
+export async function getFile(
+  token: string,
+  fileId: number,
+): Promise<CanvasFile> {
+  return canvasFetch<CanvasFile>(token, `/api/v1/files/${fileId}`);
+}
+
+export async function downloadFile(
+  token: string,
+  fileUrl: string,
+): Promise<Buffer> {
+  const res = await fetch(fileUrl, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`File download error: ${res.status}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+export async function getAssignment(
+  token: string,
+  courseId: number,
+  assignmentId: number,
+): Promise<Assignment> {
+  return canvasFetch<Assignment>(
+    token,
+    `/api/v1/courses/${courseId}/assignments/${assignmentId}`,
+  );
+}
+
+export async function getCourseFiles(
+  token: string,
+  courseId: number,
+): Promise<CanvasFile[]> {
+  return canvasFetch<CanvasFile[]>(
+    token,
+    `/api/v1/courses/${courseId}/files?per_page=100&sort=name&order=asc`,
+  );
+}
+
+export async function getCoursePages(
+  token: string,
+  courseId: number,
+): Promise<PageSummary[]> {
+  return canvasFetch<PageSummary[]>(
+    token,
+    `/api/v1/courses/${courseId}/pages?per_page=100&sort=title&order=asc`,
   );
 }

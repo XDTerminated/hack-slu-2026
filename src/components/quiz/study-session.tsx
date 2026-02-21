@@ -9,10 +9,11 @@ import { Card } from "~/components/ui/card";
 
 type Props = {
   courseId: number;
-  moduleIds: number[];
+  fileIds: number[];
+  pageUrls: string[];
 };
 
-export function StudySession({ courseId, moduleIds }: Props) {
+export function StudySession({ courseId, fileIds, pageUrls }: Props) {
   const [questions, setQuestions] = useState<StudyQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -25,7 +26,7 @@ export function StudySession({ courseId, moduleIds }: Props) {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const result = await generateQuestions(courseId, moduleIds);
+      const result = await generateQuestions(courseId, fileIds, pageUrls);
       if (result.error) {
         setError(result.error);
       } else {
@@ -34,7 +35,7 @@ export function StudySession({ courseId, moduleIds }: Props) {
       setLoading(false);
     }
     void load();
-  }, [courseId, moduleIds]);
+  }, [courseId, fileIds, pageUrls]);
 
   function handleAnswer(index: number) {
     if (selectedAnswer !== null) return;

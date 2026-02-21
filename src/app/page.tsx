@@ -1,89 +1,100 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "~/server/session";
-import { getCourses } from "~/server/canvas";
-import { Card } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Button } from "~/components/ui/button";
 
-async function loginAction(formData: FormData) {
-  "use server";
-
-  const token = formData.get("token") as string;
-  if (!token?.trim()) return;
-
-  try {
-    await getCourses(token.trim());
-  } catch {
-    redirect("/?error=invalid");
-  }
-
-  const session = await getSession();
-  session.canvasToken = token.trim();
-  await session.save();
-  redirect("/dashboard");
-}
-
-type Props = {
-  searchParams: Promise<{ error?: string }>;
-};
-
-export default async function LoginPage({ searchParams }: Props) {
-  const { error } = await searchParams;
-
+export default async function HomePage() {
   const session = await getSession();
   if (session.canvasToken) {
     redirect("/dashboard");
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-8">
-      <Card className="w-full max-w-md">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          Canvas Study Tool
+    <div className="min-h-screen bg-white">
+      {/* ── Lavender header + wave ── */}
+      <div className="relative">
+        <div className="bg-[#D1C4E9]">
+          <nav className="mx-auto flex max-w-7xl items-center justify-between px-10 py-6">
+            {/* Logo */}
+            <div className="flex items-end gap-0.5">
+              <span
+                className="text-3xl tracking-tight text-[#7E6FAE]"
+                style={{ fontFamily: "var(--font-dm-serif)" }}
+              >
+                Cognify
+              </span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                className="-ml-1 mb-1"
+              >
+                <path
+                  d="M9 0l2.2 6.8L18 9l-6.8 2.2L9 18l-2.2-6.8L0 9l6.8-2.2z"
+                  fill="#A09850"
+                />
+              </svg>
+            </div>
+
+            {/* Login button */}
+            <Link
+              href="/login"
+              className="flex items-center gap-2.5 rounded-full bg-white/90 px-6 py-2.5 shadow-sm transition hover:shadow-md"
+            >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <circle cx="11" cy="3.5" r="2" fill="#C04040" />
+                <circle cx="17.5" cy="7.5" r="2" fill="#C04040" />
+                <circle cx="17.5" cy="14.5" r="2" fill="#C04040" />
+                <circle cx="11" cy="18.5" r="2" fill="#C04040" />
+                <circle cx="4.5" cy="14.5" r="2" fill="#C04040" />
+                <circle cx="4.5" cy="7.5" r="2" fill="#C04040" />
+                <line x1="11" y1="3.5" x2="17.5" y2="7.5" stroke="#C04040" strokeWidth="1" />
+                <line x1="17.5" y1="7.5" x2="17.5" y2="14.5" stroke="#C04040" strokeWidth="1" />
+                <line x1="17.5" y1="14.5" x2="11" y2="18.5" stroke="#C04040" strokeWidth="1" />
+                <line x1="11" y1="18.5" x2="4.5" y2="14.5" stroke="#C04040" strokeWidth="1" />
+                <line x1="4.5" y1="14.5" x2="4.5" y2="7.5" stroke="#C04040" strokeWidth="1" />
+                <line x1="4.5" y1="7.5" x2="11" y2="3.5" stroke="#C04040" strokeWidth="1" />
+              </svg>
+              <span className="text-base font-medium text-gray-800">Login</span>
+            </Link>
+          </nav>
+        </div>
+
+        {/* Wave separator */}
+        <svg
+          viewBox="0 0 1440 180"
+          preserveAspectRatio="none"
+          className="block w-full"
+        >
+          <path
+            fill="#D1C4E9"
+            d="M0,0 H1440 V60 C1200,160 800,100 480,140 C240,170 80,100 0,120 Z"
+          />
+        </svg>
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="-mt-4 flex flex-col items-center px-8 pb-32 text-center">
+        <h1
+          className="max-w-5xl text-7xl leading-tight text-[#C8BDE3]"
+          style={{ fontFamily: "var(--font-dm-serif)" }}
+        >
+          Learning That Adapts to You
         </h1>
-        <p className="mb-6 text-sm text-gray-600">
-          Enter your Canvas API access token to get started.
+
+        <p className="mt-8 max-w-lg text-lg leading-relaxed text-[#9A94B0]">
+          Real-time cognitive insights personalize
+          your lessons, adjust difficulty, and bridge
+          learning gaps as you study.
         </p>
 
-        {error === "invalid" && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            Invalid token. Please check your token and try again.
-          </div>
-        )}
-
-        <form action={loginAction} className="space-y-4">
-          <div>
-            <label
-              htmlFor="token"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              API Access Token
-            </label>
-            <Input
-              id="token"
-              name="token"
-              type="password"
-              placeholder="Paste your Canvas access token"
-              required
-            />
-          </div>
-
-          <Button type="submit" className="w-full py-3">
-            Connect to Canvas
-          </Button>
-        </form>
-
-        <div className="mt-6 rounded-lg bg-gray-50 p-4 text-xs text-gray-500">
-          <p className="mb-1 font-semibold">How to get your token:</p>
-          <ol className="list-inside list-decimal space-y-1">
-            <li>Log in to Canvas</li>
-            <li>Go to Account &gt; Settings</li>
-            <li>Scroll to Approved Integrations</li>
-            <li>Click &quot;+ New Access Token&quot;</li>
-            <li>Copy the generated token</li>
-          </ol>
-        </div>
-      </Card>
-    </main>
+        <Link
+          href="/login"
+          className="mt-12 rounded-full bg-[#D1C4E9] px-14 py-5 text-xl font-semibold text-[#5C5080] shadow-lg transition hover:shadow-xl"
+          style={{ fontFamily: "var(--font-dm-serif)" }}
+        >
+          Start Learning Smarter
+        </Link>
+      </div>
+    </div>
   );
 }

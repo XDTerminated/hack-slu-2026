@@ -2,12 +2,13 @@
 
 import { getSession } from "~/server/session";
 import { getCourses } from "~/server/canvas";
-import { fetchModuleContent } from "~/server/content";
+import { fetchSelectedContent } from "~/server/content";
 import { generateStudyQuestions, type StudyQuestion } from "~/server/ai";
 
 export async function generateQuestions(
   courseId: number,
-  moduleIds: number[],
+  fileIds: number[],
+  pageUrls: string[],
 ): Promise<{ questions: StudyQuestion[]; error?: string }> {
   try {
     const session = await getSession();
@@ -19,17 +20,18 @@ export async function generateQuestions(
     const course = courses.find((c) => c.id === courseId);
     const courseName = course?.name ?? "Unknown Course";
 
-    const content = await fetchModuleContent(
+    const content = await fetchSelectedContent(
       session.canvasToken,
       courseId,
-      moduleIds,
+      fileIds,
+      pageUrls,
     );
 
     if (!content.trim()) {
       return {
         questions: [],
         error:
-          "No readable content found in the selected modules. Try selecting modules that contain Pages.",
+          "No readable content found in the selected items. Try selecting different files or pages.",
       };
     }
 

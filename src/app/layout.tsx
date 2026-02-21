@@ -1,10 +1,10 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, DM_Serif_Display } from "next/font/google";
 
 export const metadata: Metadata = {
-  title: "Canvas Study Tool",
+  title: "Cognify",
   description: "AI-powered study tool for Canvas LMS",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
@@ -14,11 +14,17 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
+const dmSerif = DM_Serif_Display({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-dm-serif",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
+    <html lang="en" className={`${geist.variable} ${dmSerif.variable}`}>
       <body className="font-sans">{children}</body>
     </html>
   );
