@@ -4,8 +4,8 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 export const metadata: Metadata = {
-  title: "HackSLU",
-  description: "Project for HackSLU",
+  title: "Canvas Study Tool",
+  description: "AI-powered study tool for Canvas LMS",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -19,7 +19,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
-      <body>{children}</body>
+      <body className="font-sans">{children}</body>
     </html>
   );
 }
