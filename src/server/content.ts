@@ -2,10 +2,12 @@
 const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
-import { getFile, downloadFile, getPage } from "./canvas";
+import { parseOfficeAsync } from "officeparser";
+import { getFile, downloadFile, getPage, getAssignment } from "./canvas";
 import { htmlToText } from "~/utils/html-to-text";
 import {
   extractLinks,
+  extractCanvasPageSlugs,
   getGoogleDriveDownloadUrl,
   isDirectFileUrl,
 } from "~/utils/extract-links";
@@ -15,10 +17,16 @@ export async function fetchSelectedContent(
   courseId: number,
   fileIds: number[],
   pageUrls: string[],
+  assignmentIds: number[] = [],
+  linkUrls: string[] = [],
 ): Promise<string> {
   const results = await Promise.all([
     ...fileIds.map((id) => extractFileById(token, id)),
     ...pageUrls.map((url) => extractPageWithLinks(token, courseId, url)),
+    ...assignmentIds.map((id) =>
+      extractAssignmentWithLinks(token, courseId, id),
+    ),
+    ...linkUrls.map((url) => extractFromExternalLink(url)),
   ]);
 
   return results
@@ -58,13 +66,92 @@ async function extractPageWithLinks(
 
     const pageText = `## ${page.title}\n\n${htmlToText(page.body)}`;
 
-    // Find all links in the page HTML and fetch their content
+    // Find all external links and fetch their content
     const links = extractLinks(page.body);
     const linkTexts = await Promise.all(
       links.map((link) => extractFromExternalLink(link)),
     );
 
-    return [pageText, ...linkTexts.filter(Boolean)];
+    // Follow internal Canvas page links (one level deep)
+    const canvasSlugs = extractCanvasPageSlugs(page.body, courseId)
+      .filter((slug) => slug !== pageUrl)
+      .slice(0, 20);
+    const canvasTexts = await Promise.all(
+      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+    );
+
+    return [
+      pageText,
+      ...linkTexts.filter(Boolean),
+      ...canvasTexts.filter(Boolean),
+    ];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches a linked Canvas page and its external links (no further recursion).
+ */
+async function extractCanvasSubPage(
+  token: string,
+  courseId: number,
+  pageUrl: string,
+): Promise<string> {
+  try {
+    const page = await getPage(token, courseId, pageUrl);
+    if (!page.body) return "";
+
+    const pageText = `## ${page.title}\n\n${htmlToText(page.body)}`;
+
+    // Follow external links from this sub-page
+    const links = extractLinks(page.body);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
+    );
+
+    return [pageText, ...linkTexts.filter(Boolean)]
+      .filter(Boolean)
+      .join("\n\n---\n\n");
+  } catch {
+    return "";
+  }
+}
+
+// --- Assignment extraction + follow embedded links ---
+
+async function extractAssignmentWithLinks(
+  token: string,
+  courseId: number,
+  assignmentId: number,
+): Promise<string[]> {
+  try {
+    const assignment = await getAssignment(token, courseId, assignmentId);
+    if (!assignment.description) return [];
+
+    const text = htmlToText(assignment.description);
+    const assignmentText = `## ${assignment.name}\n\n${text}`;
+
+    // Follow external links in the assignment description
+    const links = extractLinks(assignment.description);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
+    );
+
+    // Follow internal Canvas page links
+    const canvasSlugs = extractCanvasPageSlugs(
+      assignment.description,
+      courseId,
+    ).slice(0, 20);
+    const canvasTexts = await Promise.all(
+      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+    );
+
+    return [
+      assignmentText,
+      ...linkTexts.filter(Boolean),
+      ...canvasTexts.filter(Boolean),
+    ];
   } catch {
     return [];
   }
@@ -111,6 +198,20 @@ async function fetchAndExtract(
       return pdf.text ? `## ${label}\n\n${pdf.text}` : "";
     }
 
+    // Office documents (pptx, docx, xlsx, etc.)
+    const isOffice =
+      contentType.includes("presentation") ||
+      contentType.includes("powerpoint") ||
+      contentType.includes("wordprocessing") ||
+      contentType.includes("msword") ||
+      contentType.includes("spreadsheet") ||
+      contentType.includes("excel") ||
+      /\.(pptx?|docx?|xlsx?)$/i.test(downloadUrl);
+    if (isOffice) {
+      const text = await parseOfficeAsync(buffer);
+      return text ? `## ${label}\n\n${text}` : "";
+    }
+
     if (contentType.includes("html")) {
       const text = htmlToText(buffer.toString("utf-8"));
       return text ? `## ${label}\n\n${text}` : "";
@@ -142,6 +243,20 @@ async function extractFromContentType(
     const buffer = await download();
     const pdf = await pdfParse(buffer);
     return `## ${name}\n\n${pdf.text}`;
+  }
+
+  // Office documents (pptx, docx, xlsx, etc.)
+  if (
+    contentType.includes("presentation") ||
+    contentType.includes("powerpoint") ||
+    contentType.includes("wordprocessing") ||
+    contentType.includes("msword") ||
+    contentType.includes("spreadsheet") ||
+    contentType.includes("excel")
+  ) {
+    const buffer = await download();
+    const text = await parseOfficeAsync(buffer);
+    return text ? `## ${name}\n\n${text}` : "";
   }
 
   if (

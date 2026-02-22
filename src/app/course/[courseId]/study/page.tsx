@@ -6,7 +6,7 @@ import { StudySession } from "~/components/quiz/study-session";
 
 type Props = {
   params: Promise<{ courseId: string }>;
-  searchParams: Promise<{ files?: string; pages?: string }>;
+  searchParams: Promise<{ files?: string; links?: string }>;
 };
 
 export default async function StudyPage({ params, searchParams }: Props) {
@@ -16,7 +16,7 @@ export default async function StudyPage({ params, searchParams }: Props) {
   }
 
   const { courseId } = await params;
-  const { files, pages } = await searchParams;
+  const { files, links } = await searchParams;
   const courseIdNum = parseInt(courseId, 10);
 
   const fileIds = (files ?? "")
@@ -24,11 +24,11 @@ export default async function StudyPage({ params, searchParams }: Props) {
     .map(Number)
     .filter((n) => !isNaN(n) && n > 0);
 
-  const pageUrls = (pages ?? "")
+  const linkUrls = (links ?? "")
     .split(",")
     .filter((s) => s.length > 0);
 
-  if (fileIds.length === 0 && pageUrls.length === 0) {
+  if (fileIds.length === 0 && linkUrls.length === 0) {
     return (
       <>
         <NavBar />
@@ -62,7 +62,7 @@ export default async function StudyPage({ params, searchParams }: Props) {
           <StudySession
             courseId={courseIdNum}
             fileIds={fileIds}
-            pageUrls={pageUrls}
+            linkUrls={linkUrls}
           />
         </div>
       </main>

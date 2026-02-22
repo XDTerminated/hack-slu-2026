@@ -8,7 +8,7 @@ import { generateStudyQuestions, type StudyQuestion } from "~/server/ai";
 export async function generateQuestions(
   courseId: number,
   fileIds: number[],
-  pageUrls: string[],
+  linkUrls: string[],
 ): Promise<{ questions: StudyQuestion[]; error?: string }> {
   try {
     const session = await getSession();
@@ -24,7 +24,9 @@ export async function generateQuestions(
       session.canvasToken,
       courseId,
       fileIds,
-      pageUrls,
+      [],
+      [],
+      linkUrls,
     );
 
     if (!content.trim()) {
