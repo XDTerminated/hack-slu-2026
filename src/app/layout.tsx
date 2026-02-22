@@ -12,7 +12,7 @@ import {
 export const metadata: Metadata = {
   title: "Cognify",
   description: "AI-powered study tool for Canvas LMS",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/icon.svg" }],
 };
 
 const geist = Geist({

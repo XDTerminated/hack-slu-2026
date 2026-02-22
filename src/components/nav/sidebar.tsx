@@ -96,39 +96,6 @@ export function Sidebar() {
     <aside className="fixed inset-y-4 left-4 z-50">
       <div className="flex h-full flex-col items-start justify-between overflow-visible rounded-full bg-[#DCD8FF] px-3 py-6 shadow-lg">
         <div className="flex flex-col items-start gap-4 pt-4">
-          {/* Cognify brand mark + half cog */}
-          <span
-            className="self-center text-[12px] font-bold tracking-wider text-[#7E6FAE]"
-            style={{
-              fontFamily: "var(--font-josefin-sans)",
-              letterSpacing: "0.08em",
-            }}
-          >
-            cognify
-          </span>
-          <div className="-mt-4 mb-6 self-center">
-            <div className="overflow-hidden" style={{ height: 22 }}>
-              <svg
-                width="44"
-                height="44"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-[#7E6FAE]"
-                style={{ marginTop: -22 }}
-              >
-                <title>Cognify</title>
-                <line x1="2" y1="11" x2="9" y2="11" strokeWidth="4" />
-                <line x1="15" y1="11" x2="22" y2="11" strokeWidth="4" />
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001.08 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1.08z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
-          </div>
-
           {navItems.map((item) => {
             const isActive = item.match(pathname);
             return (
