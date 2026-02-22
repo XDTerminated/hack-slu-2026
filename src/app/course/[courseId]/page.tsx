@@ -275,6 +275,8 @@ export default async function CoursePage({ params }: Props) {
         <div className="mb-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <Image
+            width={0}
+            height={0}
             src="/cognify-logo-purple.svg"
             alt="Cognify"
             style={{ width: "200px", height: "auto", maxWidth: "none" }}

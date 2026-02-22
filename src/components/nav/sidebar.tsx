@@ -101,7 +101,7 @@ export function Sidebar() {
           const isActive = item.match(pathname);
           return (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               title={item.label}
               className={`rounded-full p-3 transition ${

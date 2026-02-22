@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { type FriendlyName, semanticSearch } from "~/app/courses/actions";
@@ -129,8 +128,8 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                 >
                   <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:shadow-lg hover:border-[#DCD8FF]/40">
                     {course.image_download_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <Image
+                      // biome-ignore lint/performance/noImgElement: Img required
+                      <img
                         src={course.image_download_url}
                         alt=""
                         className="h-full w-full flex-1 object-cover"

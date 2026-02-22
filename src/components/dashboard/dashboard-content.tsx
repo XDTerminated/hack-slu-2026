@@ -160,11 +160,12 @@ export function DashboardContent() {
               {s.studyMinutes}
             </span>
             <div className="flex flex-col items-center justify-center pt-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <Image
+                width={36}
+                height={36}
                 src="/time.svg"
                 alt="Clock"
-                style={{ width: "36px", height: "36px", maxWidth: "none" }}
+                style={{ maxWidth: "none" }}
               />
               <span
                 className="text-xl text-[#797979]"
@@ -201,8 +202,9 @@ export function DashboardContent() {
         {/* Row 2, left — Day Streak */}
         <div className="col-span-3 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
           <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <Image
+              width={0}
+              height={0}
               src="/streak.svg"
               alt="Streak"
               style={{ width: "80px", height: "auto", maxWidth: "none" }}
