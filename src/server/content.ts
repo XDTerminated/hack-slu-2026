@@ -2,21 +2,22 @@
 const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
+
 import { parseOffice } from "officeparser";
 import {
-  getFile,
-  downloadFile,
-  getPage,
-  getAssignment,
-  getCourseSyllabus,
-} from "./canvas";
-import { htmlToText } from "~/utils/html-to-text";
-import {
-  extractLinks,
   extractCanvasPageSlugs,
+  extractLinks,
   getGoogleDriveDownloadUrl,
   isDirectFileUrl,
 } from "~/utils/extract-links";
+import { htmlToText } from "~/utils/html-to-text";
+import {
+  downloadFile,
+  getAssignment,
+  getCourseSyllabus,
+  getFile,
+  getPage,
+} from "./canvas";
 
 export async function fetchSelectedContent(
   token: string,

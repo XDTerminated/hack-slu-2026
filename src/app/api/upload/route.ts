@@ -1,7 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { saveUpload } from "~/server/upload-store";
 import { parseOffice } from "officeparser";
+import { saveUpload } from "~/server/upload-store";
 import { htmlToText } from "~/utils/html-to-text";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -19,7 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File too large (max 25 MB)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "File too large (max 25 MB)" },
+        { status: 400 },
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -41,7 +44,11 @@ export async function POST(req: Request) {
     ) {
       const ast = await parseOffice(buffer);
       text = ast.toText();
-    } else if (ct.includes("html") || name.endsWith(".html") || name.endsWith(".htm")) {
+    } else if (
+      ct.includes("html") ||
+      name.endsWith(".html") ||
+      name.endsWith(".htm")
+    ) {
       text = htmlToText(buffer.toString("utf-8"));
     } else if (
       ct.startsWith("text/") ||

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { type FriendlyName, semanticSearch } from "~/app/courses/actions";
 import type { Course } from "~/server/canvas";
-import { semanticSearch, type FriendlyName } from "~/app/courses/actions";
 
 type Props = {
   courses: Course[];
@@ -11,8 +12,14 @@ type Props = {
 };
 
 const purpleShades = [
-  "#7E6FAE", "#9B8EC4", "#B8A0F0", "#6B5B95",
-  "#8673B3", "#A78BFA", "#7B68AE", "#9F8FD0",
+  "#7E6FAE",
+  "#9B8EC4",
+  "#B8A0F0",
+  "#6B5B95",
+  "#8673B3",
+  "#A78BFA",
+  "#7B68AE",
+  "#9F8FD0",
 ];
 
 const sizePattern = [
@@ -61,9 +68,7 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
   }, [search, courses]);
 
   const filtered =
-    matchedIds === null
-      ? courses
-      : courses.filter((c) => matchedIds.has(c.id));
+    matchedIds === null ? courses : courses.filter((c) => matchedIds.has(c.id));
 
   return (
     <>
@@ -85,6 +90,7 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+            <title>Logo</title>
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -124,7 +130,7 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                   <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:shadow-lg hover:border-[#DCD8FF]/40">
                     {course.image_download_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={course.image_download_url}
                         alt=""
                         className="h-full w-full flex-1 object-cover"

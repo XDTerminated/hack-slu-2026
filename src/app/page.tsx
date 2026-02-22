@@ -33,7 +33,9 @@ export default function HomePage() {
               <span
                 className="text-2xl font-medium text-[#DCD8FF]"
                 style={{ fontFamily: "var(--font-josefin-sans)" }}
-              >Login</span>
+              >
+                Login
+              </span>
             </Link>
           </nav>
         </div>
@@ -44,6 +46,7 @@ export default function HomePage() {
           preserveAspectRatio="none"
           className="block w-full"
         >
+          <title>Wave Separator</title>
           <path
             fill="#DCD8FF"
             d="M0,0 H1440 V120 Q1080,0 720,90 Q360,180 0,60 Z"
@@ -61,9 +64,8 @@ export default function HomePage() {
         </h1>
 
         <p className="mt-3 max-w-lg text-2xl leading-relaxed text-[#DCD8FF]">
-          Real-time cognitive insights personalize
-          your lessons, adjust difficulty, and bridge
-          learning gaps as you study.
+          Real-time cognitive insights personalize your lessons, adjust
+          difficulty, and bridge learning gaps as you study.
         </p>
 
         <Link

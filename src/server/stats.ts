@@ -1,10 +1,10 @@
 "use server";
 
+import { and, eq, gte, sql } from "drizzle-orm";
+import { getSelf } from "~/server/canvas";
 import { db } from "~/server/db";
 import { studySessions } from "~/server/db/schema";
-import { eq, gte, and, sql } from "drizzle-orm";
 import { getSession } from "~/server/session";
-import { getSelf } from "~/server/canvas";
 
 /** Resolve the Canvas user ID, backfilling session if needed */
 async function resolveUserId(): Promise<number | null> {
@@ -52,7 +52,13 @@ export async function getDashboardStats(
 ): Promise<DashboardStats> {
   const userId = await resolveUserId();
   if (!userId) {
-    return { studyMinutes: 0, quizzesCompleted: 0, questionsAnswered: 0, correctAnswers: 0, streak: 0 };
+    return {
+      studyMinutes: 0,
+      quizzesCompleted: 0,
+      questionsAnswered: 0,
+      correctAnswers: 0,
+      streak: 0,
+    };
   }
 
   const now = new Date();
@@ -61,7 +67,11 @@ export async function getDashboardStats(
   if (range === "today") {
     since = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   } else if (range === "week") {
-    since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    since = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - now.getDay(),
+    );
   } else {
     since = new Date(now.getFullYear(), now.getMonth(), 1);
   }
@@ -81,7 +91,17 @@ export async function getDashboardStats(
       ),
     );
 
-  const row = rows[0]!;
+  const row = rows[0];
+
+  if (row === undefined) {
+    return {
+      studyMinutes: 0,
+      quizzesCompleted: 0,
+      questionsAnswered: 0,
+      correctAnswers: 0,
+      streak: 0,
+    };
+  }
 
   // Calculate streak: count consecutive days with at least one session
   const streak = await calculateStreak(userId);
@@ -104,24 +124,33 @@ async function calculateStreak(userId: number): Promise<number> {
     .where(eq(studySessions.canvasUserId, userId))
     .orderBy(sql`DATE(${studySessions.completedAt}) DESC`);
 
-  if (days.length === 0) return 0;
+  if (days[0] === undefined) return 0;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  const firstDay = new Date(days[0]!.day);
+  const firstDay = new Date(days[0].day);
   firstDay.setHours(0, 0, 0, 0);
 
-  if (firstDay.getTime() !== today.getTime() && firstDay.getTime() !== yesterday.getTime()) {
+  if (
+    firstDay.getTime() !== today.getTime() &&
+    firstDay.getTime() !== yesterday.getTime()
+  ) {
     return 0;
   }
 
   let streak = 1;
   for (let i = 1; i < days.length; i++) {
-    const prev = new Date(days[i - 1]!.day);
-    const curr = new Date(days[i]!.day);
+    const lastDay = days[i - 1];
+    const currentDay = days[i];
+    if (lastDay === undefined || currentDay === undefined) {
+      break;
+    }
+
+    const prev = new Date(lastDay.day);
+    const curr = new Date(currentDay.day);
     prev.setHours(0, 0, 0, 0);
     curr.setHours(0, 0, 0, 0);
 

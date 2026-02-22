@@ -1,57 +1,36 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
-
-import { getSession } from "~/server/session";
-import {
-  getCourses,
-  getCourseFiles,
-  getCoursePages,
-  getModules,
-  getModuleItems,
-  getFile,
-  getPage,
-  getFrontPage,
-  getCourseSyllabus,
-  getCourseAssignments,
-} from "~/server/canvas";
-import type { CanvasFile } from "~/server/canvas";
-import {
-  extractLinks,
-  extractCanvasPageSlugs,
-  extractCanvasFileIds,
-  getGoogleDriveDownloadUrl,
-  isDirectFileUrl,
-} from "~/utils/extract-links";
+import { friendlyCourseNames } from "~/app/courses/actions";
 import { Sidebar } from "~/components/nav/sidebar";
-import {
-  getCourses,
-  getCourseFiles,
-  getCoursePages,
-  getModules,
-  getFile,
-  getPage,
-  getFrontPage,
-  getCourseSyllabus,
-  getCourseAssignments,
-} from "~/server/canvas";
+import { ContentPicker } from "~/components/quiz/content-picker";
 import type { CanvasFile, PageSummary } from "~/server/canvas";
 import {
-  extractCanvasPages,
-  extractExternalFileLinks,
+  getCourseAssignments,
+  getCourseFiles,
+  getCoursePages,
+  getCourseSyllabus,
+  getCourses,
+  getFile,
+  getFrontPage,
+  getModuleItems,
+  getModules,
+  getPage,
+} from "~/server/canvas";
+import { getSession } from "~/server/session";
+import {
   extractCanvasFileIds,
-  extractEmbeddedHtmlUrls,
-  isDirectFileUrl,
+  extractCanvasPageSlugs,
+  extractLinks,
   getGoogleDriveDownloadUrl,
+  isDirectFileUrl,
 } from "~/utils/extract-links";
-import { NavBar } from "~/components/nav/nav-bar";
-import { ContentPicker } from "~/components/quiz/content-picker";
-import { friendlyCourseNames } from "~/app/courses/actions";
 
 type Props = {
   params: Promise<{ courseId: string }>;
 };
 
 /** Collect unique page slugs into allPages, returns the seen set */
-function addPages(
+function _addPages(
   allPages: PageSummary[],
   seen: Set<string>,
   discovered: { slug: string; title: string }[],
@@ -109,7 +88,10 @@ export default async function CoursePage({ params }: Props) {
         ),
       );
       for (let i = 0; i < truncated.length; i++) {
-        truncated[i]!.items = fullItems[i];
+        const module = truncated[i];
+        if (module !== undefined) {
+          module.items = fullItems[i];
+        }
       }
     }
   }
@@ -292,7 +274,7 @@ export default async function CoursePage({ params }: Props) {
         {/* Header */}
         <div className="mb-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/cognify-logo-purple.svg"
             alt="Cognify"
             style={{ width: "200px", height: "auto", maxWidth: "none" }}

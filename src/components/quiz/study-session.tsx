@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { generateQuestions } from "~/app/course/[courseId]/study/actions";
-import { recordStudySession } from "~/server/stats";
-import type { StudyQuestion } from "~/server/ai";
 import { Spinner } from "~/components/ui/spinner";
+import type { StudyQuestion } from "~/server/ai";
+import { recordStudySession } from "~/server/stats";
 import {
-  saveQuizState,
   clearQuizState,
   type SavedQuizState,
+  saveQuizState,
 } from "~/utils/quiz-state";
 
 type Props = {
@@ -51,6 +51,7 @@ export function StudySession({
   const startTimeRef = useRef<number>(resumeState?.startTime ?? Date.now());
   const savedRef = useRef(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Should always update
   useEffect(() => {
     if (resumeState) return;
     let cancelled = false;
@@ -78,7 +79,6 @@ export function StudySession({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Persist quiz state to localStorage on every change
@@ -243,8 +243,9 @@ export function StudySession({
             showExplanation && i === question.correctIndex;
 
           return (
-            <div key={i}>
+            <div key={option}>
               <button
+                type="button"
                 onClick={() => handleAnswer(i)}
                 disabled={selectedAnswer !== null}
                 className={classes}
@@ -280,6 +281,7 @@ export function StudySession({
       {selectedAnswer !== null && (
         <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6">
           <button
+            type="button"
             onClick={nextQuestion}
             className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-4 text-lg font-medium text-white shadow-lg transition hover:bg-[#A89BD0] active:bg-[#9889C0]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}

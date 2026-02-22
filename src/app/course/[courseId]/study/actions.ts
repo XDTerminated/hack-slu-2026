@@ -1,9 +1,9 @@
 "use server";
 
-import { getSession } from "~/server/session";
+import { generateStudyQuestions, type StudyQuestion } from "~/server/ai";
 import { getCourses } from "~/server/canvas";
 import { fetchSelectedContent } from "~/server/content";
-import { generateStudyQuestions, type StudyQuestion } from "~/server/ai";
+import { getSession } from "~/server/session";
 import { getUploads } from "~/server/upload-store";
 
 export async function generateQuestions(
@@ -35,7 +35,9 @@ export async function generateQuestions(
       includeSyllabus,
     );
     const uploadContent = uploadIds.length > 0 ? getUploads(uploadIds) : "";
-    const content = [canvasContent, uploadContent].filter(Boolean).join("\n\n---\n\n");
+    const content = [canvasContent, uploadContent]
+      .filter(Boolean)
+      .join("\n\n---\n\n");
 
     if (!content.trim()) {
       return {

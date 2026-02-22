@@ -1,15 +1,23 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "~/server/session";
-import { getCourses } from "~/server/canvas";
+import { redirect } from "next/navigation";
 import { friendlyCourseNames } from "~/app/courses/actions";
 import { Sidebar } from "~/components/nav/sidebar";
-import { StudySession } from "~/components/quiz/study-session";
 import { ResumeStudySession } from "~/components/quiz/resume-study-session";
+import { StudySession } from "~/components/quiz/study-session";
+import { getCourses } from "~/server/canvas";
+import { getSession } from "~/server/session";
 
 type Props = {
   params: Promise<{ courseId: string }>;
-  searchParams: Promise<{ files?: string; pages?: string; links?: string; assignments?: string; syllabus?: string; uploads?: string; resume?: string }>;
+  searchParams: Promise<{
+    files?: string;
+    pages?: string;
+    links?: string;
+    assignments?: string;
+    syllabus?: string;
+    uploads?: string;
+    resume?: string;
+  }>;
 };
 
 export default async function StudyPage({ params, searchParams }: Props) {
@@ -36,33 +44,41 @@ export default async function StudyPage({ params, searchParams }: Props) {
     );
   }
 
-  const { files, pages: pagesParam, links, assignments, syllabus, uploads } = sp;
+  const {
+    files,
+    pages: pagesParam,
+    links,
+    assignments,
+    syllabus,
+    uploads,
+  } = sp;
 
   const fileIds = (files ?? "")
     .split(",")
     .map(Number)
-    .filter((n) => !isNaN(n) && n > 0);
+    .filter((n) => !Number.isNaN(n) && n > 0);
 
-  const pageUrls = (pagesParam ?? "")
-    .split(",")
-    .filter((s) => s.length > 0);
+  const pageUrls = (pagesParam ?? "").split(",").filter((s) => s.length > 0);
 
-  const linkUrls = (links ?? "")
-    .split(",")
-    .filter((s) => s.length > 0);
+  const linkUrls = (links ?? "").split(",").filter((s) => s.length > 0);
 
   const assignmentIds = (assignments ?? "")
     .split(",")
     .map(Number)
-    .filter((n) => !isNaN(n) && n > 0);
+    .filter((n) => !Number.isNaN(n) && n > 0);
 
   const includeSyllabus = syllabus === "1";
 
-  const uploadIds = (uploads ?? "")
-    .split(",")
-    .filter((s) => s.length > 0);
+  const uploadIds = (uploads ?? "").split(",").filter((s) => s.length > 0);
 
-  if (fileIds.length === 0 && pageUrls.length === 0 && linkUrls.length === 0 && assignmentIds.length === 0 && !includeSyllabus && uploadIds.length === 0) {
+  if (
+    fileIds.length === 0 &&
+    pageUrls.length === 0 &&
+    linkUrls.length === 0 &&
+    assignmentIds.length === 0 &&
+    !includeSyllabus &&
+    uploadIds.length === 0
+  ) {
     return (
       <div className="relative min-h-screen bg-[#FAFAFA]">
         <Sidebar />
@@ -86,8 +102,12 @@ export default async function StudyPage({ params, searchParams }: Props) {
   const course = courses.find((c) => c.id === courseIdNum);
   let courseName = course?.name ?? "Course";
   if (course) {
-    const friendly = await friendlyCourseNames([{ id: course.id, name: course.name, course_code: course.course_code }]).catch(() => ({}));
-    const f = (friendly as Record<number, { short?: string; full?: string }>)[course.id];
+    const friendly = await friendlyCourseNames([
+      { id: course.id, name: course.name, course_code: course.course_code },
+    ]).catch(() => ({}));
+    const f = (friendly as Record<number, { short?: string; full?: string }>)[
+      course.id
+    ];
     if (f?.short && f?.full) {
       courseName = `${f.short} - ${f.full}`;
     }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { getDashboardStats, type DashboardStats } from "~/server/stats";
+import { useEffect, useState } from "react";
+import { type DashboardStats, getDashboardStats } from "~/server/stats";
 import { loadQuizState, type SavedQuizState } from "~/utils/quiz-state";
 
 type Range = "today" | "week" | "month";
@@ -85,6 +86,7 @@ export function DashboardContent() {
         <div className="flex gap-3">
           {(["today", "week", "month"] as Range[]).map((r) => (
             <button
+              type="button"
               key={r}
               onClick={() => setRange(r)}
               className={`rounded-full px-6 py-2 text-sm font-medium transition ${
@@ -107,6 +109,7 @@ export function DashboardContent() {
         {/* Row 1, left — Resume Quiz or Quizzes Completed */}
         {savedQuiz ? (
           <button
+            type="button"
             onClick={resumeQuiz}
             className="col-span-5 flex cursor-pointer flex-col items-center justify-center rounded-3xl bg-[#DCD8FF] shadow-sm transition hover:bg-[#9b8ad3] hover:shadow-md"
           >
@@ -158,7 +161,7 @@ export function DashboardContent() {
             </span>
             <div className="flex flex-col items-center justify-center pt-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/time.svg"
                 alt="Clock"
                 style={{ width: "36px", height: "36px", maxWidth: "none" }}
@@ -199,7 +202,7 @@ export function DashboardContent() {
         <div className="col-span-3 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/streak.svg"
               alt="Streak"
               style={{ width: "80px", height: "auto", maxWidth: "none" }}

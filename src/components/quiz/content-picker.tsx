@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback, useRef, useState } from "react";
 import type { CanvasFile } from "~/server/canvas";
 
 type Props = {
@@ -216,6 +216,7 @@ export function ContentPicker({
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+            <title>Logo</title>
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -376,7 +377,9 @@ export function ContentPicker({
       )}
 
       {/* File upload area */}
-      <div
+      {/** biome-ignore lint/a11y/useKeyWithClickEvents: Interactive drag and drop */}
+      {/** biome-ignore lint/a11y/noStaticElementInteractions: Interactive drag and drop */}
+      <span
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -414,6 +417,7 @@ export function ContentPicker({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
+              <title>File Upload Icon</title>
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -422,7 +426,7 @@ export function ContentPicker({
             </span>
           </>
         )}
-      </div>
+      </span>
 
       {uploadError && (
         <p className="mt-2 text-sm text-red-500">{uploadError}</p>
@@ -435,6 +439,7 @@ export function ContentPicker({
       {totalSelected > 0 && (
         <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6 pl-28">
           <button
+            type="button"
             onClick={startStudying}
             className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#A89BD0] hover:shadow-xl active:bg-[#9889C0]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}

@@ -1,8 +1,9 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { getSession } from "~/server/session";
-import { getSelf } from "~/server/canvas";
-import { Sidebar } from "~/components/nav/sidebar";
 import { DashboardContent } from "~/components/dashboard/dashboard-content";
+import { Sidebar } from "~/components/nav/sidebar";
+import { getSelf } from "~/server/canvas";
+import { getSession } from "~/server/session";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -29,7 +30,7 @@ export default async function DashboardPage() {
         {/* Header */}
         <div className="mb-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/cognify-logo-purple.svg"
             alt="Cognify"
             style={{ width: "200px", height: "auto", maxWidth: "none" }}

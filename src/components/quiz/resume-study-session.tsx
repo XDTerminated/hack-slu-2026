@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { loadQuizState, clearQuizState } from "~/utils/quiz-state";
+import { useEffect, useState } from "react";
 import { StudySession } from "~/components/quiz/study-session";
+import { clearQuizState, loadQuizState } from "~/utils/quiz-state";
 
 type Props = { courseId: number };
 
@@ -12,7 +12,9 @@ export function ResumeStudySession({ courseId }: Props) {
   const [checked, setChecked] = useState(false);
   const state = typeof window !== "undefined" ? loadQuizState() : null;
 
-  useEffect(() => { setChecked(true); }, []);
+  useEffect(() => {
+    setChecked(true);
+  }, []);
 
   if (!checked) return null;
 

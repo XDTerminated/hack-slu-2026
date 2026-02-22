@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "~/server/session";
-import { getCourses, getSelf } from "~/server/canvas";
+import { redirect } from "next/navigation";
+import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { Button } from "~/components/ui/button";
+import { getCourses, getSelf } from "~/server/canvas";
+import { getSession } from "~/server/session";
 
 async function loginAction(formData: FormData) {
   "use server";

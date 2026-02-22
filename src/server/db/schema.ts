@@ -1,9 +1,5 @@
 import { index, pgTableCreator } from "drizzle-orm/pg-core";
 
-/**
- * Multi-project schema: all tables prefixed with "hack-slu_"
- * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- */
 export const createTable = pgTableCreator((name) => `hack-slu_${name}`);
 
 /** Each completed quiz session */
