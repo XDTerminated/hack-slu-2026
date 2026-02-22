@@ -1,10 +1,12 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "~/server/session";
-import { getCourses } from "~/server/canvas";
+import { redirect } from "next/navigation";
+import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { Button } from "~/components/ui/button";
+import { getCourses, getSelf } from "~/server/canvas";
+import { db } from "~/server/db";
+import { users } from "~/server/db/schema";
+import { getSession } from "~/server/session";
 
 async function loginAction(formData: FormData) {
   "use server";
@@ -12,14 +14,29 @@ async function loginAction(formData: FormData) {
   const token = formData.get("token") as string;
   if (!token?.trim()) return;
 
+  let userId: number;
   try {
-    await getCourses(token.trim());
+    const [, self] = await Promise.all([
+      getCourses(token.trim()),
+      getSelf(token.trim()),
+    ]);
+    userId = self.id;
+
+    // Store user name for leaderboard (always sync Canvas name)
+    await db
+      .insert(users)
+      .values({ canvasUserId: self.id, name: self.name })
+      .onConflictDoUpdate({
+        target: users.canvasUserId,
+        set: { name: self.name, updatedAt: new Date() },
+      });
   } catch {
     redirect("/login?error=invalid");
   }
 
   const session = await getSession();
   session.canvasToken = token.trim();
+  session.canvasUserId = userId;
   await session.save();
   redirect("/dashboard");
 }

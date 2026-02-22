@@ -44,10 +44,26 @@ Only return IDs from the provided list.`,
 
 export type FriendlyName = { short: string; full: string };
 
+// Cache friendly names so we don't call AI on every page load
+const nameCache = new Map<
+  string,
+  { result: Record<number, FriendlyName>; expires: number }
+>();
+
 export async function friendlyCourseNames(
   courses: { id: number; name: string; course_code: string }[],
 ): Promise<Record<number, FriendlyName>> {
   if (courses.length === 0) return {};
+
+  // Build a cache key from the course IDs
+  const cacheKey = courses
+    .map((c) => c.id)
+    .sort()
+    .join(",");
+  const cached = nameCache.get(cacheKey);
+  if (cached && Date.now() < cached.expires) {
+    return cached.result;
+  }
 
   const courseList = courses
     .map((c) => `${c.id}: code="${c.course_code}" name="${c.name}"`)
@@ -95,5 +111,7 @@ Keys are course IDs as strings.`,
       };
     }
   }
+  // Cache for 1 hour
+  nameCache.set(cacheKey, { result, expires: Date.now() + 60 * 60 * 1000 });
   return result;
 }

@@ -17,6 +17,7 @@ export function NavBar() {
             viewBox="0 0 18 18"
             className="-ml-0.5 mb-0.5"
           >
+            <title>Logo</title>
             <path
               d="M9 0l2.2 6.8L18 9l-6.8 2.2L9 18l-2.2-6.8L0 9l6.8-2.2z"
               fill="#A09850"

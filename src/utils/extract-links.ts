@@ -4,8 +4,12 @@
 export function extractLinks(html: string): string[] {
   const links: string[] = [];
   const regex = /href=["']([^"']+)["']/gi;
-  let match;
-  while ((match = regex.exec(html)) !== null) {
+
+  while (true) {
+    const match = regex.exec(html);
+    if (match === null) {
+      break;
+    }
     const url = match[1];
     if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
       links.push(url);
@@ -48,90 +52,51 @@ export function getGoogleDriveDownloadUrl(url: string): string | null {
 }
 
 /**
- * Extracts Canvas page slugs from HTML links for a specific course.
- * Finds both relative (/courses/ID/pages/SLUG) and absolute URLs.
+ * Extracts Canvas page slugs from HTML that link to pages in the given course.
+ * Matches both absolute URLs and relative /courses/:id/pages/:slug paths.
  */
 export function extractCanvasPageSlugs(
-  html: string,
-  courseId: number,
-): string[] {
-  const slugs: string[] = [];
-  const seen = new Set<string>();
-  const hrefRe = /href=["']([^"']+)["']/gi;
-  const pageRe = new RegExp(`/courses/${courseId}/pages/([^"'#?\\s/]+)`);
-
-  let match;
-  while ((match = hrefRe.exec(html)) !== null) {
-    const href = match[1];
-    if (!href) continue;
-    const pageMatch = pageRe.exec(href);
-    if (pageMatch?.[1]) {
-      const slug = decodeURIComponent(pageMatch[1]);
-      if (!seen.has(slug)) {
-        seen.add(slug);
-        slugs.push(slug);
-      }
-    }
-  }
-  return slugs;
-}
-
-/**
- * Extracts Canvas page links with their visible anchor text from HTML.
- * Prefers the title attribute over inner text when available.
- * Returns slug + title pairs for use in the content picker.
- */
-export function extractCanvasPages(
   html: string,
   courseId: number,
 ): { slug: string; title: string }[] {
   const results: { slug: string; title: string }[] = [];
   const seen = new Set<string>();
-  const tagPattern = /<a\s([^>]*?)>([\s\S]*?)<\/a>/gi;
-  const pageRe = new RegExp(`/courses/${courseId}/pages/([^"'#?\\s/]+)`);
 
-  let match;
-  while ((match = tagPattern.exec(html)) !== null) {
-    const attrs = match[1]!;
-    const innerHtml = match[2]!;
-    const hrefMatch = /href=["']([^"']+)["']/i.exec(attrs);
-    if (!hrefMatch?.[1]) continue;
+  // Match href links to course pages (absolute and relative)
+  const patterns = [
+    // Absolute: https://...instructure.com/courses/356315/pages/slug
+    new RegExp(
+      `href=["'](?:https?://[^/]+)?/courses/${courseId}/pages/([^"'#?]+)["']`,
+      "gi",
+    ),
+  ];
 
-    const pageMatch = pageRe.exec(hrefMatch[1]);
-    if (!pageMatch?.[1]) continue;
-
-    const slug = decodeURIComponent(pageMatch[1].replace(/\/$/, ""));
-    if (!slug || seen.has(slug)) continue;
-    seen.add(slug);
-
-    const titleAttr = /title=["']([^"']+)["']/i.exec(attrs);
-    const innerText = innerHtml.replace(/<[^>]+>/g, "").trim();
-    const title =
-      titleAttr?.[1] ?? (innerText ? innerText : slug.replace(/-/g, " "));
-
-    results.push({ slug, title });
+  for (const regex of patterns) {
+    while (true) {
+      const match = regex.exec(html);
+      if (match === null) {
+        break;
+      }
+      const uriComponent = match[1];
+      if (uriComponent === undefined) continue;
+      const slug = decodeURIComponent(uriComponent);
+      if (!seen.has(slug)) {
+        seen.add(slug);
+        // Convert slug to readable title: "2500-algorithms-sp26" -> "2500 Algorithms Sp26"
+        const title = slug
+          .replace(/[-_]/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        results.push({ slug, title });
+      }
+    }
   }
+
   return results;
 }
 
 /**
- * Extracts Canvas file IDs from HTML content.
- * Matches /files/:id patterns in Canvas URLs (links, embeds, etc.).
- */
-export function extractCanvasFileIds(html: string): number[] {
-  const ids = new Set<number>();
-  const pattern = /\/files\/(\d+)/g;
-  let match;
-  while ((match = pattern.exec(html)) !== null) {
-    const id = parseInt(match[1]!, 10);
-    if (!isNaN(id)) ids.add(id);
-  }
-  return Array.from(ids);
-}
-
-/**
  * Returns true if the URL points to a directly downloadable file
- * (PDF, text, etc.) based on its path extension.
+ * based on its path extension.
  */
 export function isDirectFileUrl(url: string): boolean {
   try {
@@ -146,11 +111,44 @@ export function isDirectFileUrl(url: string): boolean {
       pathname.endsWith(".xls") ||
       pathname.endsWith(".txt") ||
       pathname.endsWith(".md") ||
-      pathname.endsWith(".rtf")
+      pathname.endsWith(".html") ||
+      pathname.endsWith(".htm") ||
+      pathname.endsWith(".rtf") ||
+      pathname.endsWith(".pptx") ||
+      pathname.endsWith(".ppt") ||
+      pathname.endsWith(".docx") ||
+      pathname.endsWith(".doc") ||
+      pathname.endsWith(".xlsx") ||
+      pathname.endsWith(".xls")
     );
   } catch {
     return false;
   }
+}
+
+/**
+ * Extracts Canvas internal file IDs from HTML links.
+ * Matches URLs like /courses/{courseId}/files/{fileId}/download or /files/{fileId}/download.
+ */
+export function extractCanvasFileIds(html: string): number[] {
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  const regex = /\/files\/(\d+)(?:\/download)?/gi;
+
+  while (true) {
+    const match = regex.exec(html);
+    if (match === null) {
+      break;
+    }
+    const strId = match[1];
+    if (strId === undefined) continue;
+    const id = parseInt(strId, 10);
+    if (!Number.isNaN(id) && !seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -160,11 +158,16 @@ export function isDirectFileUrl(url: string): boolean {
 export function extractEmbeddedHtmlUrls(html: string): string[] {
   const urls: string[] = [];
   const seen = new Set<string>();
-  const pattern = /<(?:embed|iframe)\s[^>]*?src=["']([^"']+)["'][^>]*>/gi;
-  let match;
-  while ((match = pattern.exec(html)) !== null) {
-    let url = match[1]!;
-    if (url.startsWith("//")) url = "https:" + url;
+  const regex = /<(?:embed|iframe)\s[^>]*?src=["']([^"']+)["'][^>]*>/gi;
+
+  while (true) {
+    const match = regex.exec(html);
+    if (match === null) {
+      break;
+    }
+    let url = match[1];
+    if (url === undefined) continue;
+    if (url.startsWith("//")) url = `https:${url}`;
     if (!url.startsWith("http")) continue;
     if (seen.has(url)) continue;
     seen.add(url);
@@ -187,21 +190,36 @@ export function extractExternalFileLinks(
 
   const results: { url: string; title: string }[] = [];
   const seen = new Set<string>();
-  const tagPattern = /<a\s([^>]*?)>([\s\S]*?)<\/a>/gi;
+  const regex = /<a\s([^>]*?)>([\s\S]*?)<\/a>/gi;
 
-  let match;
-  while ((match = tagPattern.exec(fixedHtml)) !== null) {
-    const attrs = match[1]!;
-    const innerHtml = match[2]!;
+  while (true) {
+    const match = regex.exec(fixedHtml);
+    if (match === null) {
+      break;
+    }
+    const attrs = match[1];
+    const innerHtml = match[2];
+    if (attrs === undefined || innerHtml === undefined) continue;
+
     const hrefMatch = /href=["']([^"']+)["']/i.exec(attrs);
     if (!hrefMatch?.[1]) continue;
 
     let url = hrefMatch[1];
     // Resolve relative URLs when a base URL is provided
-    if (baseUrl && !url.startsWith("http") && !url.startsWith("//") && !url.startsWith("#") && !url.startsWith("mailto:")) {
-      try { url = new URL(url, baseUrl).href; } catch { continue; }
+    if (
+      baseUrl &&
+      !url.startsWith("http") &&
+      !url.startsWith("//") &&
+      !url.startsWith("#") &&
+      !url.startsWith("mailto:")
+    ) {
+      try {
+        url = new URL(url, baseUrl).href;
+      } catch {
+        continue;
+      }
     } else if (url.startsWith("//")) {
-      url = "https:" + url;
+      url = `https:${url}`;
     }
     if (!url.startsWith("http")) continue;
     if (seen.has(url)) continue;
@@ -212,8 +230,7 @@ export function extractExternalFileLinks(
     seen.add(url);
     const innerText = innerHtml.replace(/<[^>]+>/g, "").trim();
     const titleAttr = /title=["']([^"']+)["']/i.exec(attrs);
-    const title =
-      titleAttr?.[1] ?? (innerText ? innerText : urlToLabel(url));
+    const title = titleAttr?.[1] ?? (innerText ? innerText : urlToLabel(url));
 
     results.push({ url, title });
   }
@@ -226,7 +243,9 @@ function urlToLabel(url: string): string {
     const segments = pathname.split("/").filter(Boolean);
     const last = segments[segments.length - 1];
     if (last && last !== "view" && last !== "edit") {
-      return decodeURIComponent(last).replace(/[_-]/g, " ").replace(/\.\w+$/, "");
+      return decodeURIComponent(last)
+        .replace(/[_-]/g, " ")
+        .replace(/\.\w+$/, "");
     }
     return "External File";
   } catch {

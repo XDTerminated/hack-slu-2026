@@ -1,7 +1,13 @@
 import "~/styles/globals.css";
 
-import { type Metadata } from "next";
-import { Geist, DM_Serif_Display, Josefin_Sans, Maitree, Average_Sans } from "next/font/google";
+import type { Metadata } from "next";
+import {
+  Average_Sans,
+  DM_Serif_Display,
+  Geist,
+  Josefin_Sans,
+  Maitree,
+} from "next/font/google";
 
 export const metadata: Metadata = {
   title: "Cognify",
@@ -42,7 +48,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${dmSerif.variable} ${josefinSans.variable} ${maitree.variable} ${averageSans.variable}`}>
+    <html
+      lang="en"
+      className={`${geist.variable} ${dmSerif.variable} ${josefinSans.variable} ${maitree.variable} ${averageSans.variable}`}
+    >
       <body className="font-maitree">{children}</body>
     </html>
   );

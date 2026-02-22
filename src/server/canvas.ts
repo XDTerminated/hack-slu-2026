@@ -80,6 +80,12 @@ export type Assignment = {
 
 // --- API Functions ---
 
+export async function getSelf(
+  token: string,
+): Promise<{ id: number; name: string }> {
+  return canvasFetch<{ id: number; name: string }>(token, "/api/v1/users/self");
+}
+
 export async function getCourses(token: string): Promise<Course[]> {
   return canvasFetch<Course[]>(
     token,
@@ -123,10 +129,7 @@ export async function getFrontPage(
   token: string,
   courseId: number,
 ): Promise<Page> {
-  return canvasFetch<Page>(
-    token,
-    `/api/v1/courses/${courseId}/front_page`,
-  );
+  return canvasFetch<Page>(token, `/api/v1/courses/${courseId}/front_page`);
 }
 
 export async function getFile(

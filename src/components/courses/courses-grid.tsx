@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { type FriendlyName, semanticSearch } from "~/app/courses/actions";
 import type { Course } from "~/server/canvas";
-import { semanticSearch, type FriendlyName } from "~/app/courses/actions";
 
 type Props = {
   courses: Course[];
@@ -11,8 +11,14 @@ type Props = {
 };
 
 const purpleShades = [
-  "#7E6FAE", "#9B8EC4", "#B8A0F0", "#6B5B95",
-  "#8673B3", "#A78BFA", "#7B68AE", "#9F8FD0",
+  "#7E6FAE",
+  "#9B8EC4",
+  "#B8A0F0",
+  "#6B5B95",
+  "#8673B3",
+  "#A78BFA",
+  "#7B68AE",
+  "#9F8FD0",
 ];
 
 const sizePattern = [
@@ -61,16 +67,14 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
   }, [search, courses]);
 
   const filtered =
-    matchedIds === null
-      ? courses
-      : courses.filter((c) => matchedIds.has(c.id));
+    matchedIds === null ? courses : courses.filter((c) => matchedIds.has(c.id));
 
   return (
     <>
       {/* Search bar — same style as content-picker */}
       <div className="mb-8 flex items-center justify-between">
         <h1
-          className="text-5xl text-[#DCD8FF]"
+          className="text-5xl font-bold text-[#7E6FAE]"
           style={{ fontFamily: "var(--font-average-sans)" }}
         >
           My Courses
@@ -85,6 +89,7 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+            <title>Logo</title>
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -93,10 +98,10 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48 rounded-full border border-gray-200 py-2 pl-9 pr-4 text-sm text-gray-600 placeholder-gray-400 focus:border-[#DCD8FF] focus:outline-none focus:ring-1 focus:ring-[#DCD8FF]"
+            className="w-48 rounded-full border border-gray-200 py-2 pl-9 pr-4 text-sm text-gray-600 placeholder-gray-400 focus:border-[#7E6FAE] focus:outline-none focus:ring-1 focus:ring-[#7E6FAE]"
           />
           {isPending && (
-            <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#DCD8FF] border-t-transparent" />
+            <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#7E6FAE] border-t-transparent" />
           )}
         </div>
       </div>
@@ -121,17 +126,20 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                   href={`/course/${course.id}`}
                   className={sizeClass}
                 >
-                  <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:shadow-lg hover:border-[#DCD8FF]/40">
+                  <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:border-[#7E6FAE]/40 hover:shadow-xl">
                     {course.image_download_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={course.image_download_url}
-                        alt=""
-                        className="h-full w-full flex-1 object-cover"
-                      />
+                      <div className="relative flex-1 overflow-hidden">
+                        {/* biome-ignore lint/performance/noImgElement: Img required */}
+                        <img
+                          src={course.image_download_url}
+                          alt=""
+                          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-[#7E6FAE]/0 transition-colors duration-300 group-hover:bg-[#7E6FAE]/10" />
+                      </div>
                     ) : (
                       <div
-                        className="flex-1"
+                        className="flex-1 transition-all duration-300 group-hover:brightness-110"
                         style={{
                           backgroundColor:
                             purpleShades[purpleIndex++ % purpleShades.length],
@@ -140,12 +148,12 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                     )}
                     <div className="min-w-0 p-4">
                       <h2
-                        className="truncate text-lg font-bold text-[#7E6FAE]"
+                        className="truncate text-lg font-bold text-[#7E6FAE] transition-colors duration-300 group-hover:text-[#5B4D8A]"
                         style={{ fontFamily: "var(--font-josefin-sans)" }}
                       >
                         {friendlyNames[course.id]?.full ?? course.name}
                       </h2>
-                      <p className="mt-1 truncate text-xs text-gray-400">
+                      <p className="mt-1 truncate text-xs text-gray-400 transition-colors duration-300 group-hover:text-[#7E6FAE]">
                         {friendlyNames[course.id]?.short ?? course.course_code}
                       </p>
                     </div>

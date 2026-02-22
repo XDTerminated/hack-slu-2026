@@ -1,5 +1,4 @@
-import { type Config } from "drizzle-kit";
-
+import type { Config } from "drizzle-kit";
 import { env } from "~/env";
 
 export default {
@@ -9,4 +8,5 @@ export default {
     url: env.DATABASE_URL,
   },
   tablesFilter: ["hack-slu_*"],
+  casing: "snake_case",
 } satisfies Config;

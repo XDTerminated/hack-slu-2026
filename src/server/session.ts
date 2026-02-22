@@ -4,6 +4,7 @@ import { env } from "~/env";
 
 export type SessionData = {
   canvasToken?: string;
+  canvasUserId?: number;
 };
 
 export async function getSession() {

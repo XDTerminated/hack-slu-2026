@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { CanvasFile, PageSummary } from "~/server/canvas";
-import { Button } from "~/components/ui/button";
+import { useCallback, useRef, useState } from "react";
+import type { CanvasFile } from "~/server/canvas";
+import { loadQuizState } from "~/utils/quiz-state";
 
 type Props = {
   courseId: number;
   courseCode: string;
   files: CanvasFile[];
   externalLinks: { url: string; title: string }[];
+  assignments: { id: number; name: string }[];
+  hasSyllabus: boolean;
 };
 
 function formatFileSize(bytes: number): string {
@@ -20,7 +22,10 @@ function formatFileSize(bytes: number): string {
 
 function fileTypeLabel(contentType: string): string {
   if (contentType === "application/pdf") return "PDF";
-  if (contentType.includes("presentation") || contentType.includes("powerpoint"))
+  if (
+    contentType.includes("presentation") ||
+    contentType.includes("powerpoint")
+  )
     return "PPTX";
   if (contentType.includes("wordprocessing") || contentType.includes("msword"))
     return "DOCX";
@@ -45,17 +50,32 @@ function linkTypeLabel(url: string): string {
 
 type UploadedFile = { id: string; name: string };
 
-export function ContentPicker({ courseId, courseCode, files, externalLinks }: Props) {
+export function ContentPicker({
+  courseId,
+  courseCode,
+  files,
+  externalLinks,
+  assignments,
+  hasSyllabus,
+}: Props) {
   const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
+
   const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
+  const [selectedAssignments, setSelectedAssignments] = useState<Set<number>>(
+    new Set(),
+  );
+  const [syllabusSelected, setSyllabusSelected] = useState(false);
   const [search, setSearch] = useState("");
   const [uploads, setUploads] = useState<UploadedFile[]>([]);
-  const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
+  const [selectedUploads, setSelectedUploads] = useState<Set<string>>(
+    new Set(),
+  );
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   function toggleFile(fileId: number) {
     setSelectedFiles((prev) => {
@@ -71,6 +91,15 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
       const next = new Set(prev);
       if (next.has(url)) next.delete(url);
       else next.add(url);
+      return next;
+    });
+  }
+
+  function toggleAssignment(id: number) {
+    setSelectedAssignments((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -91,7 +120,11 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
       const form = new FormData();
       form.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: form });
-      const data = (await res.json()) as { id?: string; name?: string; error?: string };
+      const data = (await res.json()) as {
+        id?: string;
+        name?: string;
+        error?: string;
+      };
       if (!res.ok || !data.id) {
         setUploadError(data.error ?? "Upload failed");
         return;
@@ -119,7 +152,12 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
     e.target.value = "";
   }
 
-  const totalSelected = selectedFiles.size + selectedLinks.size + selectedUploads.size;
+  const totalSelected =
+    selectedFiles.size +
+    selectedLinks.size +
+    selectedAssignments.size +
+    (syllabusSelected ? 1 : 0) +
+    selectedUploads.size;
 
   function startStudying() {
     if (totalSelected === 0) return;
@@ -129,6 +167,12 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
     }
     if (selectedLinks.size > 0) {
       params.set("links", Array.from(selectedLinks).join(","));
+    }
+    if (selectedAssignments.size > 0) {
+      params.set("assignments", Array.from(selectedAssignments).join(","));
+    }
+    if (syllabusSelected) {
+      params.set("syllabus", "1");
     }
     if (selectedUploads.size > 0) {
       params.set("uploads", Array.from(selectedUploads).join(","));
@@ -143,21 +187,30 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
   const filteredLinks = search
     ? externalLinks.filter((l) => l.title.toLowerCase().includes(lowerSearch))
     : externalLinks;
-  const hasContent = files.length > 0 || externalLinks.length > 0;
+  const filteredAssignments = search
+    ? assignments.filter((a) => a.name.toLowerCase().includes(lowerSearch))
+    : assignments;
+  const showSyllabus =
+    hasSyllabus && (!search || "syllabus".includes(lowerSearch));
+  const hasContent =
+    files.length > 0 ||
+    externalLinks.length > 0 ||
+    assignments.length > 0 ||
+    hasSyllabus;
 
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
       {/* Course header + search */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <h2
-          className="text-2xl font-bold text-[#DCD8FF]"
+          className="text-2xl font-bold text-[#7E6FAE]"
           style={{ fontFamily: "var(--font-josefin-sans)" }}
         >
           {courseCode}
         </h2>
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -165,6 +218,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+            <title>Logo</title>
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -173,22 +227,20 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48 rounded-full border border-gray-200 py-2 pl-9 pr-4 text-sm text-gray-600 placeholder-gray-400 focus:border-[#DCD8FF] focus:outline-none focus:ring-1 focus:ring-[#DCD8FF]"
+            className="w-48 rounded-full border border-gray-200 py-2 pr-4 pl-9 text-sm text-gray-600 placeholder-gray-400 focus:border-[#7E6FAE] focus:ring-1 focus:ring-[#7E6FAE] focus:outline-none"
           />
         </div>
       </div>
 
-      {/* Course files (from Canvas) */}
-      {filteredFiles.length > 0 && (
+      {/* Lessons (Canvas files + external links) */}
+      {(filteredFiles.length > 0 || filteredLinks.length > 0) && (
         <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">
-            Course Files
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">Lessons</h2>
           <div className="space-y-2">
             {filteredFiles.map((file) => (
               <label
-                key={file.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                key={`file-${file.id}`}
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -209,21 +261,10 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
                 </div>
               </label>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* External links */}
-      {filteredLinks.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">
-            Linked Files
-          </h2>
-          <div className="space-y-2">
             {filteredLinks.map((link) => (
               <label
-                key={link.url}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                key={`link-${link.url}`}
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -245,17 +286,69 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
         </div>
       )}
 
+      {/* Assignments */}
+      {filteredAssignments.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">
+            Assignments
+          </h2>
+          <div className="space-y-2">
+            {filteredAssignments.map((a) => (
+              <label
+                key={a.id}
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedAssignments.has(a.id)}
+                  onChange={() => toggleAssignment(a.id)}
+                  className="h-5 w-5 rounded border-gray-300 text-[#7E6FAE]"
+                />
+                <div className="min-w-0 flex-1">
+                  <span className="font-medium text-gray-900">{a.name}</span>
+                  <span className="ml-2 text-xs text-gray-400">Assignment</span>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Syllabus */}
+      {showSyllabus && (
+        <div className="mb-6">
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">Syllabus</h2>
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]">
+            <input
+              type="checkbox"
+              checked={syllabusSelected}
+              onChange={() => setSyllabusSelected((v) => !v)}
+              className="h-5 w-5 rounded border-gray-300 text-[#7E6FAE]"
+            />
+            <div className="min-w-0 flex-1">
+              <span className="font-medium text-gray-900">Course Syllabus</span>
+              <span className="ml-2 text-xs text-gray-400">Syllabus</span>
+            </div>
+          </label>
+        </div>
+      )}
+
       {!hasContent && (
         <p className="py-8 text-center text-gray-400">
           No readable files or pages found for this course.
         </p>
       )}
 
-      {hasContent && filteredFiles.length === 0 && filteredLinks.length === 0 && search && (
-        <p className="py-8 text-center text-gray-400">
-          No results for &ldquo;{search}&rdquo;
-        </p>
-      )}
+      {hasContent &&
+        filteredFiles.length === 0 &&
+        filteredLinks.length === 0 &&
+        filteredAssignments.length === 0 &&
+        !showSyllabus &&
+        search && (
+          <p className="py-8 text-center text-gray-400">
+            No results for &ldquo;{search}&rdquo;
+          </p>
+        )}
 
       {/* Uploaded files */}
       {uploads.length > 0 && (
@@ -267,7 +360,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
             {uploads.map((u) => (
               <label
                 key={u.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -286,15 +379,20 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
       )}
 
       {/* File upload area */}
-      <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      {/** biome-ignore lint/a11y/useKeyWithClickEvents: Interactive drag and drop */}
+      {/** biome-ignore lint/a11y/noStaticElementInteractions: Interactive drag and drop */}
+      <span
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={`mt-6 flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-4 text-gray-400 transition ${
           dragOver
-            ? "border-[#DCD8FF] bg-[#F3F0FF]"
-            : "border-gray-200 hover:border-[#DCD8FF]/50"
+            ? "border-[#7E6FAE] bg-[#F3F0FF]"
+            : "border-gray-200 hover:border-[#7E6FAE]/50"
         }`}
       >
         <input
@@ -306,7 +404,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
         />
         {uploading ? (
           <div className="flex items-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#DCD8FF] border-t-transparent" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7E6FAE] border-t-transparent" />
             <span className="text-sm">Uploading...</span>
           </div>
         ) : (
@@ -316,11 +414,12 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
               height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#DCD8FF"
+              stroke="#7E6FAE"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
+              <title>File Upload Icon</title>
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -329,21 +428,76 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
             </span>
           </>
         )}
-      </div>
+      </span>
 
       {uploadError && (
         <p className="mt-2 text-sm text-red-500">{uploadError}</p>
       )}
 
-      {/* Start studying button */}
+      {/* Spacer so fixed button doesn't overlap content */}
+      {totalSelected > 0 && <div className="h-20" />}
+
+      {/* Start studying button — fixed at bottom */}
       {totalSelected > 0 && (
-        <button
-          onClick={startStudying}
-          className="mt-6 w-full cursor-pointer rounded-full bg-[#B8B0E0] py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-[#A89BD0] hover:shadow-lg active:bg-[#9889C0]"
-          style={{ fontFamily: "var(--font-josefin-sans)" }}
-        >
-          Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""})
-        </button>
+        <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6 pl-28">
+          <button
+            type="button"
+            onClick={() => {
+              if (loadQuizState()) {
+                setShowConfirm(true);
+              } else {
+                startStudying();
+              }
+            }}
+            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#7E6FAE] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#6B5D9A] hover:shadow-xl active:bg-[#5B4D8A]"
+            style={{ fontFamily: "var(--font-josefin-sans)" }}
+          >
+            Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""}
+            )
+          </button>
+        </div>
+      )}
+
+      {/* Confirmation popup */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+            <h2
+              className="mb-3 text-xl font-bold text-gray-800"
+              style={{ fontFamily: "var(--font-josefin-sans)" }}
+            >
+              Are you sure?
+            </h2>
+            <p
+              className="mb-6 text-gray-500"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              Are you sure you want to make a new quiz? It&apos;s going to
+              overwrite the old quiz.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 cursor-pointer rounded-full border-2 border-gray-300 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+                style={{ fontFamily: "var(--font-josefin-sans)" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirm(false);
+                  startStudying();
+                }}
+                className="flex-1 cursor-pointer rounded-full bg-[#7E6FAE] py-2.5 text-sm font-medium text-white transition hover:bg-[#6B5D9A]"
+                style={{ fontFamily: "var(--font-josefin-sans)" }}
+              >
+                Yes, overwrite
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

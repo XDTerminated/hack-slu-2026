@@ -2,15 +2,22 @@
 const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
+
 import { parseOffice } from "officeparser";
-import { getFile, downloadFile, getPage, getAssignment } from "./canvas";
-import { htmlToText } from "~/utils/html-to-text";
 import {
-  extractLinks,
   extractCanvasPageSlugs,
+  extractLinks,
   getGoogleDriveDownloadUrl,
   isDirectFileUrl,
 } from "~/utils/extract-links";
+import { htmlToText } from "~/utils/html-to-text";
+import {
+  downloadFile,
+  getAssignment,
+  getCourseSyllabus,
+  getFile,
+  getPage,
+} from "./canvas";
 
 export async function fetchSelectedContent(
   token: string,
@@ -19,6 +26,7 @@ export async function fetchSelectedContent(
   pageUrls: string[],
   assignmentIds: number[] = [],
   linkUrls: string[] = [],
+  includeSyllabus = false,
 ): Promise<string> {
   const results = await Promise.all([
     ...fileIds.map((id) => extractFileById(token, id)),
@@ -27,20 +35,22 @@ export async function fetchSelectedContent(
       extractAssignmentWithLinks(token, courseId, id),
     ),
     ...linkUrls.map((url) => extractFromExternalLink(url)),
+    ...(includeSyllabus ? [extractSyllabus(token, courseId)] : []),
   ]);
 
-  return results
-    .flat()
-    .filter(Boolean)
-    .join("\n\n---\n\n");
+  const combined = results.flat().filter(Boolean).join("\n\n---\n\n");
+  return stripCJK(combined);
+}
+
+/** Strip CJK characters that pdf-parse misreads from math font encodings */
+function stripCJK(text: string): string {
+  // biome-ignore lint/suspicious/noMisleadingCharacterClass: intentional CJK range
+  return text.replace(/[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F]+/g, " ");
 }
 
 // --- Canvas file extraction ---
 
-async function extractFileById(
-  token: string,
-  fileId: number,
-): Promise<string> {
+async function extractFileById(token: string, fileId: number): Promise<string> {
   try {
     const file = await getFile(token, fileId);
     return await extractFromContentType(
@@ -74,10 +84,12 @@ async function extractPageWithLinks(
 
     // Follow internal Canvas page links (one level deep)
     const canvasSlugs = extractCanvasPageSlugs(page.body, courseId)
-      .filter((slug) => slug !== pageUrl)
+      .filter(({ slug }) => slug !== pageUrl)
       .slice(0, 20);
     const canvasTexts = await Promise.all(
-      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+      canvasSlugs.map(({ slug }) =>
+        extractCanvasSubPage(token, courseId, slug),
+      ),
     );
 
     return [
@@ -144,7 +156,9 @@ async function extractAssignmentWithLinks(
       courseId,
     ).slice(0, 20);
     const canvasTexts = await Promise.all(
-      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+      canvasSlugs.map(({ slug }) =>
+        extractCanvasSubPage(token, courseId, slug),
+      ),
     );
 
     return [
@@ -157,28 +171,19 @@ async function extractAssignmentWithLinks(
   }
 }
 
-// --- Assignment extraction + follow embedded links ---
+// --- Syllabus extraction ---
 
-async function extractAssignmentWithLinks(
+async function extractSyllabus(
   token: string,
   courseId: number,
-  assignmentId: number,
-): Promise<string[]> {
+): Promise<string> {
   try {
-    const assignment = await getAssignment(token, courseId, assignmentId);
-    if (!assignment.description) return [];
-
-    const text = htmlToText(assignment.description);
-    const assignmentText = `## ${assignment.name}\n\n${text}`;
-
-    const links = extractLinks(assignment.description);
-    const linkTexts = await Promise.all(
-      links.map((link) => extractFromExternalLink(link)),
-    );
-
-    return [assignmentText, ...linkTexts.filter(Boolean)];
+    const body = await getCourseSyllabus(token, courseId);
+    if (!body) return "";
+    const text = htmlToText(body);
+    return text ? `## Course Syllabus\n\n${text}` : "";
   } catch {
-    return [];
+    return "";
   }
 }
 

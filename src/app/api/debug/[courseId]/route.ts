@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
-import { getSession } from "~/server/session";
 import {
   getCourseFiles,
   getCoursePages,
-  getModules,
   getFrontPage,
-  getCourseSyllabus,
-  getCourseAssignments,
+  getModules,
 } from "~/server/canvas";
+import { getSession } from "~/server/session";
 import {
-  extractCanvasPages,
-  extractExternalFileLinks,
   extractCanvasFileIds,
   extractEmbeddedHtmlUrls,
+  extractExternalFileLinks,
   extractLinks,
 } from "~/utils/extract-links";
 
@@ -30,36 +27,46 @@ export async function GET(
 
   const debug: Record<string, unknown> = {};
 
-  const [files, pages, modules, syllabusBody, assignments, frontPage] =
-    await Promise.all([
-      getCourseFiles(token, cid).catch((e: unknown) => ({ error: String(e) })),
-      getCoursePages(token, cid).catch((e: unknown) => ({ error: String(e) })),
-      getModules(token, cid).catch((e: unknown) => ({ error: String(e) })),
-      getCourseSyllabus(token, cid).catch((e: unknown) => ({ error: String(e) })),
-      getCourseAssignments(token, cid).catch((e: unknown) => ({ error: String(e) })),
-      getFrontPage(token, cid).catch((e: unknown) => ({ error: String(e) })),
-    ]);
+  const [files, pages, modules, frontPage] = await Promise.all([
+    getCourseFiles(token, cid).catch((e: unknown) => ({ error: String(e) })),
+    getCoursePages(token, cid).catch((e: unknown) => ({ error: String(e) })),
+    getModules(token, cid).catch((e: unknown) => ({ error: String(e) })),
+    getFrontPage(token, cid).catch((e: unknown) => ({ error: String(e) })),
+  ]);
 
   debug.files = Array.isArray(files)
-    ? { count: files.length, items: files.map((f) => ({ id: f.id, name: f.display_name, type: f["content-type"], size: f.size })) }
+    ? {
+        count: files.length,
+        items: files.map((f) => ({
+          id: f.id,
+          name: f.display_name,
+          type: f["content-type"],
+          size: f.size,
+        })),
+      }
     : files;
 
   debug.pages = Array.isArray(pages)
-    ? { count: pages.length, items: pages.map((p) => ({ title: p.title, url: p.url })) }
+    ? {
+        count: pages.length,
+        items: pages.map((p) => ({ title: p.title, url: p.url })),
+      }
     : pages;
 
-  debug.modules = Array.isArray(modules)
-    ? { count: modules.length }
-    : modules;
+  debug.modules = Array.isArray(modules) ? { count: modules.length } : modules;
 
   if (frontPage && !("error" in frontPage)) {
-    const embeddedUrls = frontPage.body ? extractEmbeddedHtmlUrls(frontPage.body) : [];
+    const embeddedUrls = frontPage.body
+      ? extractEmbeddedHtmlUrls(frontPage.body)
+      : [];
     debug.frontPage = {
       title: frontPage.title,
       bodyLength: frontPage.body?.length ?? 0,
       embeddedUrls,
       canvasFileIds: frontPage.body ? extractCanvasFileIds(frontPage.body) : [],
-      externalFileLinks: frontPage.body ? extractExternalFileLinks(frontPage.body) : [],
+      externalFileLinks: frontPage.body
+        ? extractExternalFileLinks(frontPage.body)
+        : [],
     };
 
     // Fetch embedded pages and show raw HTML + extracted links
