@@ -70,7 +70,9 @@ export function DashboardContent() {
         <div>
           <p
             className="text-lg text-[#DCD8FF]"
-            style={{ fontFamily: "var(--font-average-sans)" }}
+            style={{
+              fontFamily: "var(--font-average-sans)",
+            }}
           >
             {rangeTitles[range]}
           </p>
@@ -92,7 +94,7 @@ export function DashboardContent() {
               className={`rounded-full px-6 py-2 text-sm font-medium transition ${
                 range === r
                   ? "bg-[#DCD8FF] text-white"
-                  : "border-2 border-[#DCD8FF] text-[#DCD8FF] hover:bg-[#DCD8FF]/10"
+                  : "cursor-pointer border-2 border-[#DCD8FF] text-[#DCD8FF] hover:bg-[#DCD8FF]/10"
               }`}
               style={{ fontFamily: "var(--font-josefin-sans)" }}
             >
