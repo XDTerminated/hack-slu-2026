@@ -26,12 +26,17 @@ export default async function CoursesPage() {
     })),
   );
 
+  // Filter out non-academic filler courses (orientation, guides, civic exams, etc.)
+  const academicCourses = courses.filter(
+    (c) => friendlyNames[c.id]?.academic !== false,
+  );
+
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       <Sidebar />
 
       <main className="pl-28 pr-10 pt-8 pb-16">
-        <CoursesGrid courses={courses} friendlyNames={friendlyNames} />
+        <CoursesGrid courses={academicCourses} friendlyNames={friendlyNames} />
       </main>
     </div>
   );
