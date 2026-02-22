@@ -6,7 +6,7 @@ import { StudySession } from "~/components/quiz/study-session";
 
 type Props = {
   params: Promise<{ courseId: string }>;
-  searchParams: Promise<{ files?: string; links?: string }>;
+  searchParams: Promise<{ files?: string; links?: string; uploads?: string }>;
 };
 
 export default async function StudyPage({ params, searchParams }: Props) {
@@ -16,7 +16,7 @@ export default async function StudyPage({ params, searchParams }: Props) {
   }
 
   const { courseId } = await params;
-  const { files, links } = await searchParams;
+  const { files, links, uploads } = await searchParams;
   const courseIdNum = parseInt(courseId, 10);
 
   const fileIds = (files ?? "")
@@ -28,7 +28,11 @@ export default async function StudyPage({ params, searchParams }: Props) {
     .split(",")
     .filter((s) => s.length > 0);
 
-  if (fileIds.length === 0 && linkUrls.length === 0) {
+  const uploadIds = (uploads ?? "")
+    .split(",")
+    .filter((s) => s.length > 0);
+
+  if (fileIds.length === 0 && linkUrls.length === 0 && uploadIds.length === 0) {
     return (
       <div className="relative min-h-screen bg-[#FAFAFA]">
         <Sidebar />
@@ -50,18 +54,15 @@ export default async function StudyPage({ params, searchParams }: Props) {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       <Sidebar />
+      <main className="pl-28 pr-10 pt-8 pb-16">
+        <div className="mx-auto max-w-2xl">
           <StudySession
             courseId={courseIdNum}
             fileIds={fileIds}
             linkUrls={linkUrls}
+            uploadIds={uploadIds}
           />
         </div>
-
-        <StudySession
-          courseId={courseIdNum}
-          fileIds={fileIds}
-          pageUrls={pageUrls}
-        />
       </main>
     </div>
   );

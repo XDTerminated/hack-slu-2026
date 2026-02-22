@@ -2,7 +2,7 @@
 const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
-import { parseOfficeAsync } from "officeparser";
+import { parseOffice } from "officeparser";
 import { getFile, downloadFile, getPage, getAssignment } from "./canvas";
 import { htmlToText } from "~/utils/html-to-text";
 import {
@@ -157,17 +157,40 @@ async function extractAssignmentWithLinks(
   }
 }
 
+// --- Assignment extraction + follow embedded links ---
+
+async function extractAssignmentWithLinks(
+  token: string,
+  courseId: number,
+  assignmentId: number,
+): Promise<string[]> {
+  try {
+    const assignment = await getAssignment(token, courseId, assignmentId);
+    if (!assignment.description) return [];
+
+    const text = htmlToText(assignment.description);
+    const assignmentText = `## ${assignment.name}\n\n${text}`;
+
+    const links = extractLinks(assignment.description);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
+    );
+
+    return [assignmentText, ...linkTexts.filter(Boolean)];
+  } catch {
+    return [];
+  }
+}
+
 // --- External link extraction (Google Drive, direct files) ---
 
 async function extractFromExternalLink(url: string): Promise<string> {
   try {
-    // Google Drive / Google Docs link
     const gdriveUrl = getGoogleDriveDownloadUrl(url);
     if (gdriveUrl) {
       return await fetchAndExtract(gdriveUrl, url);
     }
 
-    // Direct file link (.pdf, .txt, etc.)
     if (isDirectFileUrl(url)) {
       return await fetchAndExtract(url, url);
     }
@@ -208,7 +231,8 @@ async function fetchAndExtract(
       contentType.includes("excel") ||
       /\.(pptx?|docx?|xlsx?)$/i.test(downloadUrl);
     if (isOffice) {
-      const text = await parseOfficeAsync(buffer);
+      const ast = await parseOffice(buffer);
+      const text = ast.toText();
       return text ? `## ${label}\n\n${text}` : "";
     }
 
@@ -255,7 +279,8 @@ async function extractFromContentType(
     contentType.includes("excel")
   ) {
     const buffer = await download();
-    const text = await parseOfficeAsync(buffer);
+    const ast = await parseOffice(buffer);
+    const text = ast.toText();
     return text ? `## ${name}\n\n${text}` : "";
   }
 

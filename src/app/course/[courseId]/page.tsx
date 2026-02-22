@@ -1,6 +1,18 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "~/server/session";
+import {
+  getCourses,
+  getCourseFiles,
+  getModules,
+  getModuleItems,
+  getFile,
+} from "~/server/canvas";
+import type { CanvasFile } from "~/server/canvas";
+import {
+  getGoogleDriveDownloadUrl,
+  isDirectFileUrl,
+} from "~/utils/extract-links";
 import { Sidebar } from "~/components/nav/sidebar";
 import {
   getCourses,
@@ -69,8 +81,63 @@ export default async function CoursePage({ params }: Props) {
 
   const friendly = await friendlyCourseNames(
     course ? [{ id: course.id, name: course.name, course_code: course.course_code }] : [],
-  );
-  const courseName = friendly[courseIdNum]?.full ?? course?.name ?? "Course";
+  ).catch(() => ({}));
+  const courseName = (friendly as Record<number, { full?: string }>)[courseIdNum]?.full ?? course?.name ?? "Course";
+
+  // Fetch full module items for truncated modules
+  if (modules.length > 0) {
+    const truncated = modules.filter(
+      (m) => m.items_count > (m.items?.length ?? 0),
+    );
+    if (truncated.length > 0) {
+      const fullItems = await Promise.all(
+        truncated.map((m) => getModuleItems(token, courseIdNum, m.id).catch(() => [])),
+      );
+      for (let i = 0; i < truncated.length; i++) {
+        truncated[i]!.items = fullItems[i];
+      }
+    }
+  }
+
+  // Merge files from modules with Files API results
+  let allFiles: CanvasFile[] = files;
+  if (modules.length > 0) {
+    const seenFileIds = new Set(allFiles.map((f) => f.id));
+    const moduleFileIds = new Set<number>();
+    for (const mod of modules) {
+      for (const item of mod.items ?? []) {
+        if (item.type === "File" && item.content_id && !seenFileIds.has(item.content_id)) {
+          moduleFileIds.add(item.content_id);
+        }
+      }
+    }
+    if (moduleFileIds.size > 0) {
+      const fetched = await Promise.all(
+        Array.from(moduleFileIds)
+          .slice(0, 200)
+          .map((id) => getFile(token, id).catch(() => null)),
+      );
+      allFiles = [
+        ...allFiles,
+        ...fetched.filter((f): f is CanvasFile => f !== null),
+      ];
+    }
+  }
+
+  // Collect external file links from module ExternalUrl items
+  const externalLinks: { url: string; title: string }[] = [];
+  const seenExtUrls = new Set<string>();
+  for (const mod of modules) {
+    for (const item of mod.items ?? []) {
+      if (item.type === "ExternalUrl" && item.external_url) {
+        const url = item.external_url;
+        if (!seenExtUrls.has(url) && (isDirectFileUrl(url) || !!getGoogleDriveDownloadUrl(url))) {
+          seenExtUrls.add(url);
+          externalLinks.push({ url, title: item.title });
+        }
+      }
+    }
+  }
 
   // Filter files to only show readable content types
   const readableFiles = files.filter((f) => {
@@ -266,7 +333,7 @@ export default async function CoursePage({ params }: Props) {
             courseId={courseIdNum}
             courseCode={courseName}
             files={readableFiles}
-            externalLinks={displayExtLinks}
+            externalLinks={externalLinks}
           />
         </div>
       </main>
