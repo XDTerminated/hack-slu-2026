@@ -2,7 +2,8 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { CanvasFile } from "~/server/canvas";
+import type { CanvasFile, PageSummary } from "~/server/canvas";
+import { Button } from "~/components/ui/button";
 
 type Props = {
   courseId: number;
