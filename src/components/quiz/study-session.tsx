@@ -5,7 +5,6 @@ import { generateQuestions } from "~/app/course/[courseId]/study/actions";
 import type { StudyQuestion } from "~/server/ai";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
-import { Card } from "~/components/ui/card";
 
 type Props = {
   courseId: number;
@@ -60,10 +59,16 @@ export function StudySession({ courseId, fileIds, linkUrls }: Props) {
     return (
       <div className="py-20 text-center">
         <Spinner />
-        <p className="mt-4 text-gray-600">
+        <p
+          className="mt-4 text-gray-600"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
           Analyzing course content and generating questions...
         </p>
-        <p className="mt-1 text-sm text-gray-400">
+        <p
+          className="mt-1 text-sm text-gray-400"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
           This may take 10-20 seconds
         </p>
       </div>
@@ -72,7 +77,7 @@ export function StudySession({ courseId, fileIds, linkUrls }: Props) {
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 p-6 text-red-700">{error}</div>
+      <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div>
     );
   }
 
@@ -81,11 +86,22 @@ export function StudySession({ courseId, fileIds, linkUrls }: Props) {
 
     return (
       <div className="py-12 text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Study Complete!</h2>
-        <p className="mt-4 text-5xl font-bold text-blue-600">
+        <h2
+          className="text-3xl font-bold text-[#7E6FAE]"
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
+        >
+          Study Complete!
+        </h2>
+        <p
+          className="mt-6 text-7xl font-bold text-[#DCD8FF]"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
           {score}/{questions.length}
         </p>
-        <p className="mt-2 text-gray-600">
+        <p
+          className="mt-4 text-xl text-gray-500"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
           {percentage === 1
             ? "Perfect score!"
             : percentage >= 0.7
@@ -100,45 +116,42 @@ export function StudySession({ courseId, fileIds, linkUrls }: Props) {
   if (!question) return null;
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <span className="text-sm text-gray-500">
-          Question {currentIndex + 1} of {questions.length}
-        </span>
-        <span className="text-sm text-gray-500">Score: {score}</span>
-      </div>
+    <div className="relative">
+      {/* Question counter — fixed top right of page */}
+      <span
+        className="fixed right-10 top-8 text-6xl font-bold text-[#DCD8FF]"
+        style={{ fontFamily: "var(--font-average-sans)" }}
+      >
+        {currentIndex + 1}/{questions.length}
+      </span>
 
-      <div className="mb-6 h-2 rounded-full bg-gray-200">
-        <div
-          className="h-2 rounded-full bg-blue-600 transition-all"
-          style={{
-            width: `${((currentIndex + 1) / questions.length) * 100}%`,
-          }}
-        />
-      </div>
-
-      <Card className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
+      {/* Question card */}
+      <div className="mb-10 rounded-3xl bg-white p-8 shadow-sm">
+        <h2
+          className="text-xl font-semibold text-gray-800"
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
+        >
           {question.question}
         </h2>
-      </Card>
+      </div>
 
-      <div className="space-y-3">
+      {/* Answer options */}
+      <div className="space-y-4">
         {question.options.map((option, i) => {
-          let style =
-            "w-full rounded-lg border-2 border-gray-200 p-4 text-left transition hover:border-blue-300";
+          let classes =
+            "w-full rounded-full px-8 py-4 text-left text-lg transition";
 
           if (selectedAnswer !== null) {
             if (i === question.correctIndex) {
-              style =
-                "w-full rounded-lg border-2 border-green-500 bg-green-50 p-4 text-left";
+              classes += " bg-green-100 border-2 border-green-400 text-green-800";
             } else if (i === selectedAnswer) {
-              style =
-                "w-full rounded-lg border-2 border-red-500 bg-red-50 p-4 text-left";
+              classes += " bg-red-100 border-2 border-red-400 text-red-800";
             } else {
-              style =
-                "w-full rounded-lg border-2 border-gray-200 p-4 text-left opacity-50";
+              classes += " bg-white border-2 border-gray-200 text-gray-400";
             }
+          } else {
+            classes +=
+              " bg-white border-2 border-gray-200 text-gray-700 hover:bg-[#DCD8FF] hover:border-[#DCD8FF] hover:text-white cursor-pointer";
           }
 
           return (
@@ -146,7 +159,8 @@ export function StudySession({ courseId, fileIds, linkUrls }: Props) {
               key={i}
               onClick={() => handleAnswer(i)}
               disabled={selectedAnswer !== null}
-              className={style}
+              className={classes}
+              style={{ fontFamily: "var(--font-josefin-sans)" }}
             >
               {option}
             </button>
@@ -154,19 +168,32 @@ export function StudySession({ courseId, fileIds, linkUrls }: Props) {
         })}
       </div>
 
+      {/* Explanation */}
       {showExplanation && (
-        <div className="mt-6 rounded-lg bg-blue-50 p-4 text-blue-900">
-          <p className="font-semibold">Explanation:</p>
-          <p>{question.explanation}</p>
+        <div className="mt-8 rounded-3xl bg-[#F3F0FF] p-6 text-[#5B4D8A]">
+          <p
+            className="font-semibold"
+            style={{ fontFamily: "var(--font-josefin-sans)" }}
+          >
+            Explanation:
+          </p>
+          <p style={{ fontFamily: "var(--font-average-sans)" }}>
+            {question.explanation}
+          </p>
         </div>
       )}
 
+      {/* Next button */}
       {selectedAnswer !== null && (
-        <Button onClick={nextQuestion} className="mt-6 w-full py-3 text-lg">
+        <button
+          onClick={nextQuestion}
+          className="mt-8 w-full rounded-full bg-[#DCD8FF] py-4 text-lg font-medium text-white transition hover:bg-[#C8C2F0]"
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
+        >
           {currentIndex + 1 >= questions.length
             ? "See Results"
             : "Next Question"}
-        </Button>
+        </button>
       )}
     </div>
   );

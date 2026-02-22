@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: Props) {
   const { error } = await searchParams;
 
   const session = await getSession();
-  if (session.canvasToken) {
+  if (session.canvasToken && !error) {
     redirect("/dashboard");
   }
 
@@ -56,6 +56,12 @@ export default async function LoginPage({ searchParams }: Props) {
         {error === "invalid" && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
             Invalid token. Please check your token and try again.
+          </div>
+        )}
+
+        {error === "expired" && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            Your token has expired. Please enter a new one.
           </div>
         )}
 

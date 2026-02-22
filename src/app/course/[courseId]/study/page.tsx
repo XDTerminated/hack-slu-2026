@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "~/server/session";
-import { NavBar } from "~/components/nav/nav-bar";
+import { Sidebar } from "~/components/nav/sidebar";
 import { StudySession } from "~/components/quiz/study-session";
 
 type Props = {
@@ -30,42 +30,39 @@ export default async function StudyPage({ params, searchParams }: Props) {
 
   if (fileIds.length === 0 && linkUrls.length === 0) {
     return (
-      <>
-        <NavBar />
-        <main className="min-h-screen bg-gray-50 p-8">
+      <div className="relative min-h-screen bg-[#FAFAFA]">
+        <Sidebar />
+        <main className="pl-28 pr-10 pt-8 pb-16">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-gray-500">No content selected.</p>
+            <p className="mb-4 text-gray-400">No content selected.</p>
             <Link
               href={`/course/${courseId}`}
-              className="text-blue-600 hover:underline"
+              className="text-[#7E6FAE] hover:underline"
             >
               Go back and select files or pages
             </Link>
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <NavBar />
-      <main className="min-h-screen bg-gray-50 p-8">
-        <div className="mx-auto max-w-2xl">
-          <Link
-            href={`/course/${courseId}`}
-            className="mb-6 inline-block text-sm text-blue-600 hover:underline"
-          >
-            &larr; Back to content
-          </Link>
-
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <Sidebar />
           <StudySession
             courseId={courseIdNum}
             fileIds={fileIds}
             linkUrls={linkUrls}
           />
         </div>
+
+        <StudySession
+          courseId={courseIdNum}
+          fileIds={fileIds}
+          pageUrls={pageUrls}
+        />
       </main>
-    </>
+    </div>
   );
 }
