@@ -38,7 +38,14 @@ export async function fetchSelectedContent(
     ...(includeSyllabus ? [extractSyllabus(token, courseId)] : []),
   ]);
 
-  return results.flat().filter(Boolean).join("\n\n---\n\n");
+  const combined = results.flat().filter(Boolean).join("\n\n---\n\n");
+  return stripCJK(combined);
+}
+
+/** Strip CJK characters that pdf-parse misreads from math font encodings */
+function stripCJK(text: string): string {
+  // biome-ignore lint/suspicious/noMisleadingCharacterClass: intentional CJK range
+  return text.replace(/[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F]+/g, " ");
 }
 
 // --- Canvas file extraction ---

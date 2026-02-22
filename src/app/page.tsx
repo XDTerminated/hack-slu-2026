@@ -6,7 +6,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       {/* ── Lavender header + wave ── */}
       <div className="relative">
-        <div className="bg-[#DCD8FF]">
+        <div className="bg-[#7E6FAE]">
           <nav className="mx-auto flex max-w-7xl items-center justify-between px-10 py-6">
             {/* Logo */}
             <Image
@@ -31,7 +31,7 @@ export default function HomePage() {
                 className="h-8 w-auto"
               />
               <span
-                className="text-2xl font-medium text-[#DCD8FF]"
+                className="text-2xl font-medium text-[#7E6FAE]"
                 style={{ fontFamily: "var(--font-josefin-sans)" }}
               >
                 Login
@@ -48,7 +48,7 @@ export default function HomePage() {
         >
           <title>Wave Separator</title>
           <path
-            fill="#DCD8FF"
+            fill="#7E6FAE"
             d="M0,0 H1440 V120 Q1080,0 720,90 Q360,180 0,60 Z"
           />
         </svg>
@@ -57,20 +57,20 @@ export default function HomePage() {
       {/* ── Main content ── */}
       <div className="-mt-4 flex flex-col items-center px-8 pb-32 text-center">
         <h1
-          className="max-w-5xl text-7xl font-bold leading-tight whitespace-nowrap text-[#DCD8FF]"
+          className="max-w-5xl text-7xl font-bold leading-tight whitespace-nowrap text-[#7E6FAE]"
           style={{ fontFamily: "var(--font-maitree)" }}
         >
           Learning That Adapts to You
         </h1>
 
-        <p className="mt-3 max-w-lg text-2xl leading-relaxed text-[#DCD8FF]">
+        <p className="mt-3 max-w-lg text-2xl leading-relaxed text-[#7E6FAE]">
           Real-time cognitive insights personalize your lessons, adjust
           difficulty, and bridge learning gaps as you study.
         </p>
 
         <Link
           href="/login"
-          className="mt-8 rounded-full bg-[#DCD8FF] px-10 py-3.5 text-xl font-semibold text-white shadow-lg transition hover:shadow-xl"
+          className="mt-8 rounded-full bg-[#7E6FAE] px-10 py-3.5 text-xl font-semibold text-white shadow-lg transition hover:shadow-xl"
           style={{ fontFamily: "var(--font-maitree)" }}
         >
           Start Learning Smarter

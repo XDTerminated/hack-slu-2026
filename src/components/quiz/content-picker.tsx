@@ -201,7 +201,7 @@ export function ContentPicker({
       {/* Course header + search */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <h2
-          className="text-2xl font-bold text-[#DCD8FF]"
+          className="text-2xl font-bold text-[#7E6FAE]"
           style={{ fontFamily: "var(--font-josefin-sans)" }}
         >
           {courseCode}
@@ -225,7 +225,7 @@ export function ContentPicker({
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48 rounded-full border border-gray-200 py-2 pr-4 pl-9 text-sm text-gray-600 placeholder-gray-400 focus:border-[#DCD8FF] focus:ring-1 focus:ring-[#DCD8FF] focus:outline-none"
+            className="w-48 rounded-full border border-gray-200 py-2 pr-4 pl-9 text-sm text-gray-600 placeholder-gray-400 focus:border-[#7E6FAE] focus:ring-1 focus:ring-[#7E6FAE] focus:outline-none"
           />
         </div>
       </div>
@@ -238,7 +238,7 @@ export function ContentPicker({
             {filteredFiles.map((file) => (
               <label
                 key={`file-${file.id}`}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -262,7 +262,7 @@ export function ContentPicker({
             {filteredLinks.map((link) => (
               <label
                 key={`link-${link.url}`}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -294,7 +294,7 @@ export function ContentPicker({
             {filteredAssignments.map((a) => (
               <label
                 key={a.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -316,7 +316,7 @@ export function ContentPicker({
       {showSyllabus && (
         <div className="mb-6">
           <h2 className="mb-3 text-lg font-semibold text-gray-800">Syllabus</h2>
-          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]">
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]">
             <input
               type="checkbox"
               checked={syllabusSelected}
@@ -358,7 +358,7 @@ export function ContentPicker({
             {uploads.map((u) => (
               <label
                 key={u.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#7E6FAE]"
               >
                 <input
                   type="checkbox"
@@ -389,8 +389,8 @@ export function ContentPicker({
         onClick={() => fileInputRef.current?.click()}
         className={`mt-6 flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-4 text-gray-400 transition ${
           dragOver
-            ? "border-[#DCD8FF] bg-[#F3F0FF]"
-            : "border-gray-200 hover:border-[#DCD8FF]/50"
+            ? "border-[#7E6FAE] bg-[#F3F0FF]"
+            : "border-gray-200 hover:border-[#7E6FAE]/50"
         }`}
       >
         <input
@@ -402,7 +402,7 @@ export function ContentPicker({
         />
         {uploading ? (
           <div className="flex items-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#DCD8FF] border-t-transparent" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#7E6FAE] border-t-transparent" />
             <span className="text-sm">Uploading...</span>
           </div>
         ) : (
@@ -412,7 +412,7 @@ export function ContentPicker({
               height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#DCD8FF"
+              stroke="#7E6FAE"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -441,7 +441,7 @@ export function ContentPicker({
           <button
             type="button"
             onClick={startStudying}
-            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#A89BD0] hover:shadow-xl active:bg-[#9889C0]"
+            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#7E6FAE] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#6B5D9A] hover:shadow-xl active:bg-[#5B4D8A]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}
           >
             Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""}

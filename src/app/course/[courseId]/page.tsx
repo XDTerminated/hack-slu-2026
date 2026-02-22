@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { friendlyCourseNames } from "~/app/courses/actions";
 import { Sidebar } from "~/components/nav/sidebar";
@@ -271,18 +270,6 @@ export default async function CoursePage({ params }: Props) {
 
       {/* Main content */}
       <main className="pt-8 pr-10 pb-16 pl-28">
-        {/* Header */}
-        <div className="mb-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <Image
-            width={0}
-            height={0}
-            src="/cognify-logo-purple.svg"
-            alt="Cognify"
-            style={{ width: "200px", height: "auto", maxWidth: "none" }}
-          />
-        </div>
-
         <h1 className="mb-2 text-3xl font-bold text-gray-900">
           {course?.name ?? "Course"}
         </h1>

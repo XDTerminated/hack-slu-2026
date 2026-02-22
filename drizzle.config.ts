@@ -8,4 +8,5 @@ export default {
     url: env.DATABASE_URL,
   },
   tablesFilter: ["hack-slu_*"],
+  casing: "snake_case",
 } satisfies Config;

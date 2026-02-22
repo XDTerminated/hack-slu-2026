@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, gte, sql } from "drizzle-orm";
-import { getSelf } from "~/server/canvas";
+import { getCourses, getSelf } from "~/server/canvas";
 import { db } from "~/server/db";
 import { studySessions } from "~/server/db/schema";
 import { getSession } from "~/server/session";
@@ -26,18 +26,40 @@ export async function recordStudySession(
   score: number,
   totalQuestions: number,
   durationSeconds: number,
-) {
+): Promise<{ ok: boolean; error?: string }> {
   const userId = await resolveUserId();
-  if (!userId) return;
+  if (!userId) {
+    console.error("[recordStudySession] resolveUserId returned null");
+    return { ok: false, error: "Not authenticated" };
+  }
 
-  await db.insert(studySessions).values({
-    canvasUserId: userId,
-    courseId,
-    score,
-    totalQuestions,
-    durationSeconds,
-  });
+  try {
+    await db.insert(studySessions).values({
+      canvasUserId: userId,
+      courseId,
+      score,
+      totalQuestions,
+      durationSeconds,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[recordStudySession] DB insert failed:", err);
+    return { ok: false, error: String(err) };
+  }
 }
+
+export type CourseAccuracy = {
+  courseId: number;
+  questionsAnswered: number;
+  correctAnswers: number;
+};
+
+export type DailyActivity = {
+  date: string;
+  questions: number;
+  quizzes: number;
+  avgScore: number;
+};
 
 export type DashboardStats = {
   studyMinutes: number;
@@ -45,21 +67,25 @@ export type DashboardStats = {
   questionsAnswered: number;
   correctAnswers: number;
   streak: number;
+  perCourse: CourseAccuracy[];
+  dailyActivity: DailyActivity[];
 };
 
 export async function getDashboardStats(
   range: "today" | "week" | "month",
 ): Promise<DashboardStats> {
+  const empty: DashboardStats = {
+    studyMinutes: 0,
+    quizzesCompleted: 0,
+    questionsAnswered: 0,
+    correctAnswers: 0,
+    streak: 0,
+    perCourse: [],
+    dailyActivity: [],
+  };
+
   const userId = await resolveUserId();
-  if (!userId) {
-    return {
-      studyMinutes: 0,
-      quizzesCompleted: 0,
-      questionsAnswered: 0,
-      correctAnswers: 0,
-      streak: 0,
-    };
-  }
+  if (!userId) return empty;
 
   const now = new Date();
   let since: Date;
@@ -76,35 +102,60 @@ export async function getDashboardStats(
     since = new Date(now.getFullYear(), now.getMonth(), 1);
   }
 
-  const rows = await db
-    .select({
-      totalSeconds: sql<number>`COALESCE(SUM(${studySessions.durationSeconds}), 0)`,
-      quizzes: sql<number>`COUNT(*)`,
-      questions: sql<number>`COALESCE(SUM(${studySessions.totalQuestions}), 0)`,
-      correct: sql<number>`COALESCE(SUM(${studySessions.score}), 0)`,
-    })
-    .from(studySessions)
-    .where(
-      and(
-        eq(studySessions.canvasUserId, userId),
-        gte(studySessions.completedAt, since),
-      ),
-    );
+  const rangeFilter = and(
+    eq(studySessions.canvasUserId, userId),
+    gte(studySessions.completedAt, since),
+  );
+
+  const [rows, courseRows, dailyRows] = await Promise.all([
+    db
+      .select({
+        totalSeconds: sql<number>`COALESCE(SUM(${studySessions.durationSeconds}), 0)`,
+        quizzes: sql<number>`COUNT(*)`,
+        questions: sql<number>`COALESCE(SUM(${studySessions.totalQuestions}), 0)`,
+        correct: sql<number>`COALESCE(SUM(${studySessions.score}), 0)`,
+      })
+      .from(studySessions)
+      .where(rangeFilter),
+    db
+      .select({
+        courseId: studySessions.courseId,
+        questions: sql<number>`COALESCE(SUM(${studySessions.totalQuestions}), 0)`,
+        correct: sql<number>`COALESCE(SUM(${studySessions.score}), 0)`,
+      })
+      .from(studySessions)
+      .where(rangeFilter)
+      .groupBy(studySessions.courseId),
+    db
+      .select({
+        date: sql<string>`DATE(${studySessions.completedAt})`,
+        questions: sql<number>`COALESCE(SUM(${studySessions.totalQuestions}), 0)`,
+        quizzes: sql<number>`COUNT(*)`,
+        avgScore: sql<number>`ROUND(AVG(${studySessions.score}::float / NULLIF(${studySessions.totalQuestions}, 0) * 100))`,
+      })
+      .from(studySessions)
+      .where(rangeFilter)
+      .groupBy(sql`DATE(${studySessions.completedAt})`)
+      .orderBy(sql`DATE(${studySessions.completedAt})`),
+  ]);
 
   const row = rows[0];
+  if (row === undefined) return empty;
 
-  if (row === undefined) {
-    return {
-      studyMinutes: 0,
-      quizzesCompleted: 0,
-      questionsAnswered: 0,
-      correctAnswers: 0,
-      streak: 0,
-    };
-  }
-
-  // Calculate streak: count consecutive days with at least one session
   const streak = await calculateStreak(userId);
+
+  const perCourse: CourseAccuracy[] = courseRows.map((r) => ({
+    courseId: Number(r.courseId),
+    questionsAnswered: Number(r.questions),
+    correctAnswers: Number(r.correct),
+  }));
+
+  const dailyActivity: DailyActivity[] = dailyRows.map((r) => ({
+    date: String(r.date),
+    questions: Number(r.questions),
+    quizzes: Number(r.quizzes),
+    avgScore: Number(r.avgScore) || 0,
+  }));
 
   return {
     studyMinutes: Math.round(Number(row.totalSeconds) / 60),
@@ -112,7 +163,28 @@ export async function getDashboardStats(
     questionsAnswered: Number(row.questions),
     correctAnswers: Number(row.correct),
     streak,
+    perCourse,
+    dailyActivity,
   };
+}
+
+export async function getCourseNames(
+  courseIds: number[],
+): Promise<Record<number, string>> {
+  if (courseIds.length === 0) return {};
+  const session = await getSession();
+  if (!session.canvasToken) return {};
+  try {
+    const courses = await getCourses(session.canvasToken);
+    const map: Record<number, string> = {};
+    for (const id of courseIds) {
+      const course = courses.find((c) => c.id === id);
+      map[id] = course?.course_code ?? `Course ${id}`;
+    }
+    return map;
+  } catch {
+    return Object.fromEntries(courseIds.map((id) => [id, `Course ${id}`]));
+  }
 }
 
 async function calculateStreak(userId: number): Promise<number> {

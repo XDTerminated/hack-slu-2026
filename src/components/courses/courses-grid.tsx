@@ -74,7 +74,7 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
       {/* Search bar — same style as content-picker */}
       <div className="mb-8 flex items-center justify-between">
         <h1
-          className="text-5xl text-[#DCD8FF]"
+          className="text-5xl font-bold text-[#7E6FAE]"
           style={{ fontFamily: "var(--font-average-sans)" }}
         >
           My Courses
@@ -98,10 +98,10 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48 rounded-full border border-gray-200 py-2 pl-9 pr-4 text-sm text-gray-600 placeholder-gray-400 focus:border-[#DCD8FF] focus:outline-none focus:ring-1 focus:ring-[#DCD8FF]"
+            className="w-48 rounded-full border border-gray-200 py-2 pl-9 pr-4 text-sm text-gray-600 placeholder-gray-400 focus:border-[#7E6FAE] focus:outline-none focus:ring-1 focus:ring-[#7E6FAE]"
           />
           {isPending && (
-            <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#DCD8FF] border-t-transparent" />
+            <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#7E6FAE] border-t-transparent" />
           )}
         </div>
       </div>
@@ -126,7 +126,7 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                   href={`/course/${course.id}`}
                   className={sizeClass}
                 >
-                  <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:shadow-lg hover:border-[#DCD8FF]/40">
+                  <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:shadow-lg hover:border-[#7E6FAE]/40">
                     {course.image_download_url ? (
                       // biome-ignore lint/performance/noImgElement: Img required
                       <img

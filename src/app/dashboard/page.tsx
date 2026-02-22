@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { DashboardContent } from "~/components/dashboard/dashboard-content";
 import { Sidebar } from "~/components/nav/sidebar";
@@ -27,18 +26,6 @@ export default async function DashboardPage() {
       <Sidebar />
 
       <main className="pt-8 pr-10 pb-16 pl-28">
-        {/* Header */}
-        <div className="mb-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <Image
-            width={0}
-            height={0}
-            src="/cognify-logo-purple.svg"
-            alt="Cognify"
-            style={{ width: "200px", height: "auto", maxWidth: "none" }}
-          />
-        </div>
-
         <DashboardContent />
       </main>
     </div>

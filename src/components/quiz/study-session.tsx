@@ -48,6 +48,7 @@ export function StudySession({
   const [loading, setLoading] = useState(!resumeState);
   const [error, setError] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const startTimeRef = useRef<number>(resumeState?.startTime ?? Date.now());
   const savedRef = useRef(false);
 
@@ -111,12 +112,17 @@ export function StudySession({
       const durationSeconds = Math.round(
         (Date.now() - startTimeRef.current) / 1000,
       );
-      void recordStudySession(
-        courseId,
-        score,
-        questions.length,
-        durationSeconds,
-      );
+      recordStudySession(courseId, score, questions.length, durationSeconds)
+        .then((result) => {
+          if (!result.ok) {
+            console.error("Failed to save study session:", result.error);
+            setSaveError(result.error ?? "Unknown error");
+          }
+        })
+        .catch((err) => {
+          console.error("Server action error:", err);
+          setSaveError(String(err));
+        });
     }
   }, [finished, courseId, score, questions.length]);
 
@@ -177,7 +183,7 @@ export function StudySession({
           Study Complete!
         </h2>
         <p
-          className="mt-6 text-7xl font-bold text-[#DCD8FF]"
+          className="mt-6 text-7xl font-bold text-[#7E6FAE]"
           style={{ fontFamily: "var(--font-average-sans)" }}
         >
           {score}/{questions.length}
@@ -192,6 +198,11 @@ export function StudySession({
               ? "Great job!"
               : "Keep studying!"}
         </p>
+        {saveError && (
+          <p className="mt-4 text-sm text-red-500">
+            Failed to save session: {saveError}
+          </p>
+        )}
       </div>
     );
   }
@@ -203,7 +214,7 @@ export function StudySession({
     <div className="relative">
       {/* Question counter — fixed top right of page */}
       <span
-        className="fixed top-8 right-10 text-6xl font-bold text-[#DCD8FF]"
+        className="fixed top-8 right-10 text-6xl font-bold text-[#7E6FAE]"
         style={{ fontFamily: "var(--font-average-sans)" }}
       >
         {currentIndex + 1}/{questions.length}
@@ -236,7 +247,7 @@ export function StudySession({
             }
           } else {
             classes +=
-              " bg-white border-2 border-gray-200 text-gray-700 hover:bg-[#DCD8FF] hover:border-[#DCD8FF] hover:text-white cursor-pointer";
+              " bg-white border-2 border-gray-200 text-gray-700 hover:bg-[#7E6FAE] hover:border-[#7E6FAE] hover:text-white cursor-pointer";
           }
 
           const showExplanationHere =
@@ -283,7 +294,7 @@ export function StudySession({
           <button
             type="button"
             onClick={nextQuestion}
-            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-4 text-lg font-medium text-white shadow-lg transition hover:bg-[#A89BD0] active:bg-[#9889C0]"
+            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#7E6FAE] py-4 text-lg font-medium text-white shadow-lg transition hover:bg-[#6B5D9A] active:bg-[#5B4D8A]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}
           >
             {currentIndex + 1 >= questions.length

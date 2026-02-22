@@ -2,7 +2,7 @@ export function Spinner({ className = "" }: { className?: string }) {
   return (
     <div className={`inline-block ${className}`}>
       <svg
-        className="h-10 w-10 animate-spin text-[#B8B0E0]"
+        className="h-10 w-10 animate-spin text-[#7E6FAE]"
         viewBox="0 0 24 24"
         fill="currentColor"
       >

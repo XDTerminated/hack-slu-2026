@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { friendlyCourseNames } from "~/app/courses/actions";
 import { CoursesGrid } from "~/components/courses/courses-grid";
@@ -32,18 +31,6 @@ export default async function CoursesPage() {
       <Sidebar />
 
       <main className="pl-28 pr-10 pt-8 pb-16">
-        {/* Header */}
-        <div className="mb-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <Image
-            width={0}
-            height={0}
-            src="/cognify-logo-purple.svg"
-            alt="Cognify"
-            style={{ width: "200px", height: "auto", maxWidth: "none" }}
-          />
-        </div>
-
         <CoursesGrid courses={courses} friendlyNames={friendlyNames} />
       </main>
     </div>

@@ -3,7 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { type DashboardStats, getDashboardStats } from "~/server/stats";
+import { ActivityChart } from "~/components/dashboard/activity-chart";
+import { Spinner } from "~/components/ui/spinner";
+import {
+  type DashboardStats,
+  getCourseNames,
+  getDashboardStats,
+} from "~/server/stats";
 import { loadQuizState, type SavedQuizState } from "~/utils/quiz-state";
 
 type Range = "today" | "week" | "month";
@@ -25,6 +31,7 @@ export function DashboardContent() {
   const [range, setRange] = useState<Range>("today");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [courseNames, setCourseNames] = useState<Record<number, string>>({});
   const [savedQuiz, setSavedQuiz] = useState<SavedQuizState | null>(null);
 
   useEffect(() => {
@@ -34,16 +41,40 @@ export function DashboardContent() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void getDashboardStats(range).then((s) => {
-      if (!cancelled) {
+    getDashboardStats(range)
+      .then(async (s) => {
+        if (cancelled) return;
         setStats(s);
-        setLoading(false);
-      }
-    });
+        if (s.perCourse.length > 0) {
+          const names = await getCourseNames(
+            s.perCourse.map((c) => c.courseId),
+          );
+          if (!cancelled) setCourseNames(names);
+        }
+        if (!cancelled) setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch dashboard stats:", err);
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
   }, [range]);
+
+  if (loading && !stats) {
+    return (
+      <div className="flex min-h-112.5 flex-col items-center justify-center gap-4">
+        <Spinner className="scale-200" />
+        <p
+          className="animate-pulse text-lg text-[#B0B0B0]"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
+          Loading...
+        </p>
+      </div>
+    );
+  }
 
   const s = stats ?? {
     studyMinutes: 0,
@@ -51,12 +82,9 @@ export function DashboardContent() {
     questionsAnswered: 0,
     correctAnswers: 0,
     streak: 0,
+    perCourse: [],
+    dailyActivity: [],
   };
-
-  const accuracy =
-    s.questionsAnswered > 0
-      ? Math.round((s.correctAnswers / s.questionsAnswered) * 100)
-      : 0;
 
   function resumeQuiz() {
     if (!savedQuiz) return;
@@ -69,7 +97,7 @@ export function DashboardContent() {
       <div className="mb-8 flex items-end justify-between">
         <div>
           <p
-            className="text-lg text-[#DCD8FF]"
+            className="text-lg text-[#7E6FAE]"
             style={{
               fontFamily: "var(--font-average-sans)",
             }}
@@ -77,7 +105,7 @@ export function DashboardContent() {
             {rangeTitles[range]}
           </p>
           <h1
-            className="text-5xl text-[#DCD8FF]"
+            className="text-5xl font-bold text-[#7E6FAE]"
             style={{ fontFamily: "var(--font-average-sans)" }}
           >
             Dashboard
@@ -93,8 +121,8 @@ export function DashboardContent() {
               onClick={() => setRange(r)}
               className={`rounded-full px-6 py-2 text-sm font-medium transition ${
                 range === r
-                  ? "bg-[#DCD8FF] text-white"
-                  : "cursor-pointer border-2 border-[#DCD8FF] text-[#DCD8FF] hover:bg-[#DCD8FF]/10"
+                  ? "bg-[#7E6FAE] text-white"
+                  : "cursor-pointer border-2 border-[#7E6FAE] text-[#7E6FAE] hover:bg-[#7E6FAE]/10"
               }`}
               style={{ fontFamily: "var(--font-josefin-sans)" }}
             >
@@ -113,7 +141,7 @@ export function DashboardContent() {
           <button
             type="button"
             onClick={resumeQuiz}
-            className="col-span-5 flex cursor-pointer flex-col items-center justify-center rounded-3xl bg-[#DCD8FF] shadow-sm transition hover:bg-[#9b8ad3] hover:shadow-md"
+            className="col-span-5 flex cursor-pointer flex-col items-center justify-center rounded-3xl bg-[#7E6FAE] shadow-sm transition hover:bg-[#6B5D9A] hover:shadow-md"
           >
             <span
               className="text-lg text-white/70"
@@ -179,26 +207,73 @@ export function DashboardContent() {
           </div>
         </div>
 
-        {/* Row 1+2, right — Accuracy (tall card) */}
-        <div className="col-span-4 row-span-2 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
+        {/* Row 1+2, right — Per-Course Accuracy (tall card) */}
+        <div className="col-span-4 row-span-2 flex flex-col rounded-3xl bg-white shadow-sm">
           <span
-            className="text-8xl font-bold text-[#DCD8FF]"
-            style={{ fontFamily: "var(--font-average-sans)" }}
-          >
-            {accuracy}%
-          </span>
-          <span
-            className="mt-2 text-xl text-[#B0B0B0]"
+            className="pt-5 text-center text-xl text-[#B0B0B0]"
             style={{ fontFamily: "var(--font-average-sans)" }}
           >
             Accuracy
           </span>
-          <span
-            className="mt-1 text-sm text-[#D0D0D0]"
-            style={{ fontFamily: "var(--font-average-sans)" }}
-          >
-            {s.correctAnswers}/{s.questionsAnswered} correct
-          </span>
+          {s.perCourse.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center">
+              <span
+                className="text-8xl font-bold text-[#7E6FAE]"
+                style={{ fontFamily: "var(--font-average-sans)" }}
+              >
+                0%
+              </span>
+              <span
+                className="mt-1 text-sm text-[#D0D0D0]"
+                style={{ fontFamily: "var(--font-average-sans)" }}
+              >
+                No quizzes yet
+              </span>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-5 pt-3 pb-5">
+              <div className="space-y-3">
+                {s.perCourse.map((c) => {
+                  const pct =
+                    c.questionsAnswered > 0
+                      ? Math.round(
+                          (c.correctAnswers / c.questionsAnswered) * 100,
+                        )
+                      : 0;
+                  return (
+                    <div key={c.courseId}>
+                      <div className="flex items-baseline justify-between">
+                        <span
+                          className="truncate text-sm text-[#797979]"
+                          style={{ fontFamily: "var(--font-average-sans)" }}
+                        >
+                          {courseNames[c.courseId] ?? `Course ${c.courseId}`}
+                        </span>
+                        <span
+                          className="ml-2 shrink-0 text-2xl font-bold text-[#7E6FAE]"
+                          style={{ fontFamily: "var(--font-average-sans)" }}
+                        >
+                          {pct}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-2 rounded-full bg-[#F0EEF8]">
+                        <div
+                          className="h-2 rounded-full bg-[#7E6FAE]"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span
+                        className="text-xs text-[#D0D0D0]"
+                        style={{ fontFamily: "var(--font-average-sans)" }}
+                      >
+                        {c.correctAnswers}/{c.questionsAnswered} correct
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Row 2, left — Day Streak */}
@@ -239,20 +314,9 @@ export function DashboardContent() {
           </span>
         </div>
 
-        {/* Row 2, middle — Questions Answered */}
-        <div className="col-span-5 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
-          <span
-            className="text-7xl font-bold text-[#797979]"
-            style={{ fontFamily: "var(--font-average-sans)" }}
-          >
-            {s.questionsAnswered}
-          </span>
-          <span
-            className="mt-2 text-xl text-[#B0B0B0]"
-            style={{ fontFamily: "var(--font-average-sans)" }}
-          >
-            Questions Answered
-          </span>
+        {/* Row 2, middle — Activity Chart */}
+        <div className="col-span-5 rounded-3xl bg-white shadow-sm">
+          <ActivityChart dailyActivity={s.dailyActivity} />
         </div>
       </div>
     </>
