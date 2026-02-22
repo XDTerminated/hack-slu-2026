@@ -76,6 +76,8 @@ export function ContentPicker({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [difficulty, setDifficulty] = useState(1); // 0=easy, 1=medium, 2=hard
+  const difficultyLabels = ["Easy", "Medium", "Hard"] as const;
 
   function toggleFile(fileId: number) {
     setSelectedFiles((prev) => {
@@ -177,6 +179,7 @@ export function ContentPicker({
     if (selectedUploads.size > 0) {
       params.set("uploads", Array.from(selectedUploads).join(","));
     }
+    params.set("difficulty", String(difficulty));
     router.push(`/course/${courseId}/study?${params.toString()}`);
   }
 
@@ -435,26 +438,55 @@ export function ContentPicker({
       )}
 
       {/* Spacer so fixed button doesn't overlap content */}
-      {totalSelected > 0 && <div className="h-20" />}
+      {totalSelected > 0 && <div className="h-32" />}
 
-      {/* Start studying button — fixed at bottom */}
+      {/* Difficulty + Start studying — fixed at bottom */}
       {totalSelected > 0 && (
         <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6 pl-28">
-          <button
-            type="button"
-            onClick={() => {
-              if (loadQuizState()) {
-                setShowConfirm(true);
-              } else {
-                startStudying();
-              }
-            }}
-            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#7E6FAE] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#6B5D9A] hover:shadow-xl active:bg-[#5B4D8A]"
-            style={{ fontFamily: "var(--font-josefin-sans)" }}
-          >
-            Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""}
-            )
-          </button>
+          <div className="mx-auto max-w-2xl">
+            {/* Difficulty selector */}
+            <div className="mb-3 flex items-center justify-center gap-3">
+              <span
+                className="text-sm font-medium text-gray-500"
+                style={{ fontFamily: "var(--font-josefin-sans)" }}
+              >
+                Difficulty
+              </span>
+              <div className="flex rounded-full border border-gray-200 bg-white p-1">
+                {difficultyLabels.map((label, i) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setDifficulty(i)}
+                    className={`cursor-pointer rounded-full px-5 py-1.5 text-sm font-medium transition-all duration-200 ${
+                      difficulty === i
+                        ? "bg-[#7E6FAE] text-white shadow-sm"
+                        : "text-gray-500 hover:text-[#7E6FAE]"
+                    }`}
+                    style={{ fontFamily: "var(--font-josefin-sans)" }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (loadQuizState()) {
+                  setShowConfirm(true);
+                } else {
+                  startStudying();
+                }
+              }}
+              className="block w-full cursor-pointer rounded-full bg-[#7E6FAE] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#6B5D9A] hover:shadow-xl active:bg-[#5B4D8A]"
+              style={{ fontFamily: "var(--font-josefin-sans)" }}
+            >
+              Start Studying ({totalSelected} item
+              {totalSelected !== 1 ? "s" : ""})
+            </button>
+          </div>
         </div>
       )}
 

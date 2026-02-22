@@ -168,6 +168,17 @@ export function DashboardContent() {
             >
               {savedQuiz.currentIndex + 1}/{savedQuiz.questions.length}{" "}
               questions
+              <span
+                className={`ml-2 rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
+                  (savedQuiz.difficulty ?? "medium") === "easy"
+                    ? "bg-green-400/20 text-green-200"
+                    : (savedQuiz.difficulty ?? "medium") === "hard"
+                      ? "bg-red-400/20 text-red-200"
+                      : "bg-white/15 text-white/70"
+                }`}
+              >
+                {savedQuiz.difficulty ?? "medium"}
+              </span>
             </span>
           </button>
         ) : savedExam ? (

@@ -12,6 +12,7 @@ export type SavedQuizState = {
   startTime: number;
   /** URL to navigate back to for this quiz */
   studyUrl: string;
+  difficulty?: "easy" | "medium" | "hard";
 };
 
 export type SavedExamState = {
