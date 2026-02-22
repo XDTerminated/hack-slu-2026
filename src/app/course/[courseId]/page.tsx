@@ -22,12 +22,47 @@ import {
   isDirectFileUrl,
 } from "~/utils/extract-links";
 import { Sidebar } from "~/components/nav/sidebar";
+import {
+  getCourses,
+  getCourseFiles,
+  getCoursePages,
+  getModules,
+  getFile,
+  getPage,
+  getFrontPage,
+  getCourseSyllabus,
+  getCourseAssignments,
+} from "~/server/canvas";
+import type { CanvasFile, PageSummary } from "~/server/canvas";
+import {
+  extractCanvasPages,
+  extractExternalFileLinks,
+  extractCanvasFileIds,
+  extractEmbeddedHtmlUrls,
+  isDirectFileUrl,
+  getGoogleDriveDownloadUrl,
+} from "~/utils/extract-links";
+import { NavBar } from "~/components/nav/nav-bar";
 import { ContentPicker } from "~/components/quiz/content-picker";
 import { friendlyCourseNames } from "~/app/courses/actions";
 
 type Props = {
   params: Promise<{ courseId: string }>;
 };
+
+/** Collect unique page slugs into allPages, returns the seen set */
+function addPages(
+  allPages: PageSummary[],
+  seen: Set<string>,
+  discovered: { slug: string; title: string }[],
+) {
+  for (const p of discovered) {
+    if (!seen.has(p.slug)) {
+      seen.add(p.slug);
+      allPages.push({ page_id: 0, title: p.title, url: p.slug });
+    }
+  }
+}
 
 export default async function CoursePage({ params }: Props) {
   const session = await getSession();
@@ -39,22 +74,28 @@ export default async function CoursePage({ params }: Props) {
   const { courseId } = await params;
   const courseIdNum = parseInt(courseId, 10);
 
-  const [courses, files, pages, modules, syllabusBody, assignments, frontPage] = await Promise.all([
-    getCourses(token),
-    getCourseFiles(token, courseIdNum).catch(() => []),
-    getCoursePages(token, courseIdNum).catch(() => []),
-    getModules(token, courseIdNum).catch(() => []),
-    getCourseSyllabus(token, courseIdNum).catch(() => null),
-    getCourseAssignments(token, courseIdNum).catch(() => []),
-    getFrontPage(token, courseIdNum).catch(() => null),
-  ]);
+  const [courses, files, pages, modules, syllabusBody, assignments, frontPage] =
+    await Promise.all([
+      getCourses(token),
+      getCourseFiles(token, courseIdNum).catch(() => []),
+      getCoursePages(token, courseIdNum).catch(() => []),
+      getModules(token, courseIdNum).catch(() => []),
+      getCourseSyllabus(token, courseIdNum).catch(() => null),
+      getCourseAssignments(token, courseIdNum).catch(() => []),
+      getFrontPage(token, courseIdNum).catch(() => null),
+    ]);
 
   const course = courses.find((c) => c.id === courseIdNum);
 
   const friendly = await friendlyCourseNames(
-    course ? [{ id: course.id, name: course.name, course_code: course.course_code }] : [],
+    course
+      ? [{ id: course.id, name: course.name, course_code: course.course_code }]
+      : [],
   ).catch(() => ({}));
-  const courseName = (friendly as Record<number, { full?: string }>)[courseIdNum]?.full ?? course?.name ?? "Course";
+  const courseName =
+    (friendly as Record<number, { full?: string }>)[courseIdNum]?.full ??
+    course?.name ??
+    "Course";
 
   // Fetch full module items for truncated modules
   if (modules.length > 0) {
@@ -63,7 +104,9 @@ export default async function CoursePage({ params }: Props) {
     );
     if (truncated.length > 0) {
       const fullItems = await Promise.all(
-        truncated.map((m) => getModuleItems(token, courseIdNum, m.id).catch(() => [])),
+        truncated.map((m) =>
+          getModuleItems(token, courseIdNum, m.id).catch(() => []),
+        ),
       );
       for (let i = 0; i < truncated.length; i++) {
         truncated[i]!.items = fullItems[i];
@@ -78,7 +121,11 @@ export default async function CoursePage({ params }: Props) {
     const moduleFileIds = new Set<number>();
     for (const mod of modules) {
       for (const item of mod.items ?? []) {
-        if (item.type === "File" && item.content_id && !seenFileIds.has(item.content_id)) {
+        if (
+          item.type === "File" &&
+          item.content_id &&
+          !seenFileIds.has(item.content_id)
+        ) {
           moduleFileIds.add(item.content_id);
         }
       }
@@ -103,7 +150,10 @@ export default async function CoursePage({ params }: Props) {
     for (const item of mod.items ?? []) {
       if (item.type === "ExternalUrl" && item.external_url) {
         const url = item.external_url;
-        if (!seenExtUrls.has(url) && (isDirectFileUrl(url) || !!getGoogleDriveDownloadUrl(url))) {
+        if (
+          !seenExtUrls.has(url) &&
+          (isDirectFileUrl(url) || !!getGoogleDriveDownloadUrl(url))
+        ) {
           seenExtUrls.add(url);
           externalLinks.push({ url, title: item.title });
         }
@@ -114,7 +164,10 @@ export default async function CoursePage({ params }: Props) {
   // Discover external file links from syllabus, assignments, and front page
   function collectLinksFromHtml(html: string) {
     for (const url of extractLinks(html)) {
-      if (!seenExtUrls.has(url) && (isDirectFileUrl(url) || !!getGoogleDriveDownloadUrl(url))) {
+      if (
+        !seenExtUrls.has(url) &&
+        (isDirectFileUrl(url) || !!getGoogleDriveDownloadUrl(url))
+      ) {
         seenExtUrls.add(url);
         // Use filename from URL as title
         try {
@@ -142,7 +195,11 @@ export default async function CoursePage({ params }: Props) {
   // Also discover pages from module items of type "Page"
   for (const mod of modules) {
     for (const item of mod.items ?? []) {
-      if (item.type === "Page" && item.page_url && !seenPageUrls.has(item.page_url)) {
+      if (
+        item.type === "Page" &&
+        item.page_url &&
+        !seenPageUrls.has(item.page_url)
+      ) {
         seenPageUrls.add(item.page_url);
         allPages.push({ page_id: 0, title: item.title, url: item.page_url });
       }
@@ -231,7 +288,7 @@ export default async function CoursePage({ params }: Props) {
       <Sidebar />
 
       {/* Main content */}
-      <main className="pl-28 pr-10 pt-8 pb-16">
+      <main className="pt-8 pr-10 pb-16 pl-28">
         {/* Header */}
         <div className="mb-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -242,12 +299,12 @@ export default async function CoursePage({ params }: Props) {
           />
         </div>
 
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            {course?.name ?? "Course"}
-          </h1>
-          <p className="mb-8 text-gray-600">
-            Select the content you want to study from.
-          </p>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">
+          {course?.name ?? "Course"}
+        </h1>
+        <p className="mb-8 text-gray-600">
+          Select the content you want to study from.
+        </p>
 
         <div>
           <ContentPicker

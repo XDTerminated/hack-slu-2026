@@ -51,14 +51,20 @@ export function getGoogleDriveDownloadUrl(url: string): string | null {
  * Extracts Canvas page slugs from HTML that link to pages in the given course.
  * Matches both absolute URLs and relative /courses/:id/pages/:slug paths.
  */
-export function extractCanvasPageSlugs(html: string, courseId: number): { slug: string; title: string }[] {
+export function extractCanvasPageSlugs(
+  html: string,
+  courseId: number,
+): { slug: string; title: string }[] {
   const results: { slug: string; title: string }[] = [];
   const seen = new Set<string>();
 
   // Match href links to course pages (absolute and relative)
   const patterns = [
     // Absolute: https://...instructure.com/courses/356315/pages/slug
-    new RegExp(`href=["'](?:https?://[^/]+)?/courses/${courseId}/pages/([^"'#?]+)["']`, "gi"),
+    new RegExp(
+      `href=["'](?:https?://[^/]+)?/courses/${courseId}/pages/([^"'#?]+)["']`,
+      "gi",
+    ),
   ];
 
   for (const regex of patterns) {
@@ -88,6 +94,12 @@ export function isDirectFileUrl(url: string): boolean {
     const pathname = new URL(url).pathname.toLowerCase();
     return (
       pathname.endsWith(".pdf") ||
+      pathname.endsWith(".pptx") ||
+      pathname.endsWith(".ppt") ||
+      pathname.endsWith(".docx") ||
+      pathname.endsWith(".doc") ||
+      pathname.endsWith(".xlsx") ||
+      pathname.endsWith(".xls") ||
       pathname.endsWith(".txt") ||
       pathname.endsWith(".md") ||
       pathname.endsWith(".html") ||

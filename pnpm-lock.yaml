@@ -29,6 +29,9 @@ importers:
       officeparser:
         specifier: ^6.0.4
         version: 6.0.4
+      officeparser:
+        specifier: ^6.0.4
+        version: 6.0.4
       pdf-parse:
         specifier: 1.1.1
         version: 1.1.1

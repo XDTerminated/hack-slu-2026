@@ -7,6 +7,7 @@ import { getFile, downloadFile, getPage, getAssignment, getCourseSyllabus } from
 import { htmlToText } from "~/utils/html-to-text";
 import {
   extractLinks,
+  extractCanvasPageSlugs,
   getGoogleDriveDownloadUrl,
   isDirectFileUrl,
 } from "~/utils/extract-links";
@@ -73,7 +74,86 @@ async function extractPageWithLinks(
       links.map((link) => extractFromExternalLink(link)),
     );
 
-    return [pageText, ...linkTexts.filter(Boolean)];
+    // Follow internal Canvas page links (one level deep)
+    const canvasSlugs = extractCanvasPageSlugs(page.body, courseId)
+      .filter((slug) => slug !== pageUrl)
+      .slice(0, 20);
+    const canvasTexts = await Promise.all(
+      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+    );
+
+    return [
+      pageText,
+      ...linkTexts.filter(Boolean),
+      ...canvasTexts.filter(Boolean),
+    ];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches a linked Canvas page and its external links (no further recursion).
+ */
+async function extractCanvasSubPage(
+  token: string,
+  courseId: number,
+  pageUrl: string,
+): Promise<string> {
+  try {
+    const page = await getPage(token, courseId, pageUrl);
+    if (!page.body) return "";
+
+    const pageText = `## ${page.title}\n\n${htmlToText(page.body)}`;
+
+    // Follow external links from this sub-page
+    const links = extractLinks(page.body);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
+    );
+
+    return [pageText, ...linkTexts.filter(Boolean)]
+      .filter(Boolean)
+      .join("\n\n---\n\n");
+  } catch {
+    return "";
+  }
+}
+
+// --- Assignment extraction + follow embedded links ---
+
+async function extractAssignmentWithLinks(
+  token: string,
+  courseId: number,
+  assignmentId: number,
+): Promise<string[]> {
+  try {
+    const assignment = await getAssignment(token, courseId, assignmentId);
+    if (!assignment.description) return [];
+
+    const text = htmlToText(assignment.description);
+    const assignmentText = `## ${assignment.name}\n\n${text}`;
+
+    // Follow external links in the assignment description
+    const links = extractLinks(assignment.description);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
+    );
+
+    // Follow internal Canvas page links
+    const canvasSlugs = extractCanvasPageSlugs(
+      assignment.description,
+      courseId,
+    ).slice(0, 20);
+    const canvasTexts = await Promise.all(
+      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+    );
+
+    return [
+      assignmentText,
+      ...linkTexts.filter(Boolean),
+      ...canvasTexts.filter(Boolean),
+    ];
   } catch {
     return [];
   }
