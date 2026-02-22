@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "~/components/ui/button";
-import type { CanvasFile, PageSummary } from "~/server/canvas";
+import type { CanvasFile } from "~/server/canvas";
 
 type Props = {
   courseId: number;
   files: CanvasFile[];
-  pages: PageSummary[];
+  externalLinks: { url: string; title: string }[];
 };
 
 function formatFileSize(bytes: number): string {
@@ -19,16 +19,33 @@ function formatFileSize(bytes: number): string {
 
 function fileTypeLabel(contentType: string): string {
   if (contentType === "application/pdf") return "PDF";
+  if (contentType.includes("presentation") || contentType.includes("powerpoint"))
+    return "PPTX";
+  if (contentType.includes("wordprocessing") || contentType.includes("msword"))
+    return "DOCX";
+  if (contentType.includes("spreadsheet") || contentType.includes("excel"))
+    return "XLSX";
   if (contentType.includes("html")) return "HTML";
   if (contentType.startsWith("text/plain")) return "TXT";
   if (contentType.startsWith("text/")) return "Text";
   return "File";
 }
 
-export function ContentPicker({ courseId, files, pages }: Props) {
+function linkTypeLabel(url: string): string {
+  const lower = url.toLowerCase();
+  if (lower.endsWith(".pdf")) return "PDF";
+  if (lower.endsWith(".pptx") || lower.endsWith(".ppt")) return "PPTX";
+  if (lower.endsWith(".docx") || lower.endsWith(".doc")) return "DOCX";
+  if (lower.includes("docs.google.com/document")) return "Google Doc";
+  if (lower.includes("docs.google.com/presentation")) return "Slides";
+  if (lower.includes("drive.google.com")) return "Drive";
+  return "Link";
+}
+
+export function ContentPicker({ courseId, files, externalLinks }: Props) {
   const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
-  const [selectedPages, setSelectedPages] = useState<Set<string>>(new Set());
+  const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
 
   function toggleFile(fileId: number) {
     setSelectedFiles((prev) => {
@@ -39,26 +56,26 @@ export function ContentPicker({ courseId, files, pages }: Props) {
     });
   }
 
-  function togglePage(pageUrl: string) {
-    setSelectedPages((prev) => {
+  function toggleLink(url: string) {
+    setSelectedLinks((prev) => {
       const next = new Set(prev);
-      if (next.has(pageUrl)) next.delete(pageUrl);
-      else next.add(pageUrl);
+      if (next.has(url)) next.delete(url);
+      else next.add(url);
       return next;
     });
   }
 
   function selectAll() {
     setSelectedFiles(new Set(files.map((f) => f.id)));
-    setSelectedPages(new Set(pages.map((p) => p.url)));
+    setSelectedLinks(new Set(externalLinks.map((l) => l.url)));
   }
 
   function deselectAll() {
     setSelectedFiles(new Set());
-    setSelectedPages(new Set());
+    setSelectedLinks(new Set());
   }
 
-  const totalSelected = selectedFiles.size + selectedPages.size;
+  const totalSelected = selectedFiles.size + selectedLinks.size;
 
   function startStudying() {
     if (totalSelected === 0) return;
@@ -66,13 +83,13 @@ export function ContentPicker({ courseId, files, pages }: Props) {
     if (selectedFiles.size > 0) {
       params.set("files", Array.from(selectedFiles).join(","));
     }
-    if (selectedPages.size > 0) {
-      params.set("pages", Array.from(selectedPages).join(","));
+    if (selectedLinks.size > 0) {
+      params.set("links", Array.from(selectedLinks).join(","));
     }
     router.push(`/course/${courseId}/study?${params.toString()}`);
   }
 
-  const hasContent = files.length > 0 || pages.length > 0;
+  const hasContent = files.length > 0 || externalLinks.length > 0;
 
   return (
     <div>
@@ -115,26 +132,30 @@ export function ContentPicker({ courseId, files, pages }: Props) {
         </div>
       )}
 
-      {pages.length > 0 && (
+      {externalLinks.length > 0 && (
         <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">Pages</h2>
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">
+            Linked Files
+          </h2>
           <div className="space-y-2">
-            {pages.map((page) => (
+            {externalLinks.map((link) => (
               <label
-                key={page.url}
+                key={link.url}
                 className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-blue-300"
               >
                 <input
                   type="checkbox"
-                  checked={selectedPages.has(page.url)}
-                  onChange={() => togglePage(page.url)}
+                  checked={selectedLinks.has(link.url)}
+                  onChange={() => toggleLink(link.url)}
                   className="h-5 w-5 rounded border-gray-300 text-blue-600"
                 />
                 <div className="min-w-0 flex-1">
                   <span className="font-medium text-gray-900">
-                    {page.title}
+                    {link.title}
                   </span>
-                  <span className="ml-2 text-xs text-gray-400">Page</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {linkTypeLabel(link.url)}
+                  </span>
                 </div>
               </label>
             ))}
