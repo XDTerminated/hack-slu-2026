@@ -2,8 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { CanvasFile, PageSummary } from "~/server/canvas";
-import { Button } from "~/components/ui/button";
+import type { CanvasFile } from "~/server/canvas";
 
 type Props = {
   courseId: number;
@@ -22,7 +21,10 @@ function formatFileSize(bytes: number): string {
 
 function fileTypeLabel(contentType: string): string {
   if (contentType === "application/pdf") return "PDF";
-  if (contentType.includes("presentation") || contentType.includes("powerpoint"))
+  if (
+    contentType.includes("presentation") ||
+    contentType.includes("powerpoint")
+  )
     return "PPTX";
   if (contentType.includes("wordprocessing") || contentType.includes("msword"))
     return "DOCX";
@@ -47,16 +49,27 @@ function linkTypeLabel(url: string): string {
 
 type UploadedFile = { id: string; name: string };
 
-export function ContentPicker({ courseId, courseCode, files, externalLinks, assignments, hasSyllabus }: Props) {
+export function ContentPicker({
+  courseId,
+  courseCode,
+  files,
+  externalLinks,
+  assignments,
+  hasSyllabus,
+}: Props) {
   const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
 
   const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
-  const [selectedAssignments, setSelectedAssignments] = useState<Set<number>>(new Set());
+  const [selectedAssignments, setSelectedAssignments] = useState<Set<number>>(
+    new Set(),
+  );
   const [syllabusSelected, setSyllabusSelected] = useState(false);
   const [search, setSearch] = useState("");
   const [uploads, setUploads] = useState<UploadedFile[]>([]);
-  const [selectedUploads, setSelectedUploads] = useState<Set<string>>(new Set());
+  const [selectedUploads, setSelectedUploads] = useState<Set<string>>(
+    new Set(),
+  );
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -105,7 +118,11 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
       const form = new FormData();
       form.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: form });
-      const data = (await res.json()) as { id?: string; name?: string; error?: string };
+      const data = (await res.json()) as {
+        id?: string;
+        name?: string;
+        error?: string;
+      };
       if (!res.ok || !data.id) {
         setUploadError(data.error ?? "Upload failed");
         return;
@@ -133,7 +150,12 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
     e.target.value = "";
   }
 
-  const totalSelected = selectedFiles.size + selectedLinks.size + selectedAssignments.size + (syllabusSelected ? 1 : 0) + selectedUploads.size;
+  const totalSelected =
+    selectedFiles.size +
+    selectedLinks.size +
+    selectedAssignments.size +
+    (syllabusSelected ? 1 : 0) +
+    selectedUploads.size;
 
   function startStudying() {
     if (totalSelected === 0) return;
@@ -166,8 +188,13 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
   const filteredAssignments = search
     ? assignments.filter((a) => a.name.toLowerCase().includes(lowerSearch))
     : assignments;
-  const showSyllabus = hasSyllabus && (!search || "syllabus".includes(lowerSearch));
-  const hasContent = files.length > 0 || externalLinks.length > 0 || assignments.length > 0 || hasSyllabus;
+  const showSyllabus =
+    hasSyllabus && (!search || "syllabus".includes(lowerSearch));
+  const hasContent =
+    files.length > 0 ||
+    externalLinks.length > 0 ||
+    assignments.length > 0 ||
+    hasSyllabus;
 
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
@@ -181,7 +208,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
         </h2>
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -197,7 +224,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48 rounded-full border border-gray-200 py-2 pl-9 pr-4 text-sm text-gray-600 placeholder-gray-400 focus:border-[#DCD8FF] focus:outline-none focus:ring-1 focus:ring-[#DCD8FF]"
+            className="w-48 rounded-full border border-gray-200 py-2 pr-4 pl-9 text-sm text-gray-600 placeholder-gray-400 focus:border-[#DCD8FF] focus:ring-1 focus:ring-[#DCD8FF] focus:outline-none"
           />
         </div>
       </div>
@@ -205,9 +232,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
       {/* Lessons (Canvas files + external links) */}
       {(filteredFiles.length > 0 || filteredLinks.length > 0) && (
         <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">
-            Lessons
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">Lessons</h2>
           <div className="space-y-2">
             {filteredFiles.map((file) => (
               <label
@@ -277,12 +302,8 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
                   className="h-5 w-5 rounded border-gray-300 text-[#7E6FAE]"
                 />
                 <div className="min-w-0 flex-1">
-                  <span className="font-medium text-gray-900">
-                    {a.name}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-400">
-                    Assignment
-                  </span>
+                  <span className="font-medium text-gray-900">{a.name}</span>
+                  <span className="ml-2 text-xs text-gray-400">Assignment</span>
                 </div>
               </label>
             ))}
@@ -293,9 +314,7 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
       {/* Syllabus */}
       {showSyllabus && (
         <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">
-            Syllabus
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">Syllabus</h2>
           <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:border-[#DCD8FF]">
             <input
               type="checkbox"
@@ -304,12 +323,8 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
               className="h-5 w-5 rounded border-gray-300 text-[#7E6FAE]"
             />
             <div className="min-w-0 flex-1">
-              <span className="font-medium text-gray-900">
-                Course Syllabus
-              </span>
-              <span className="ml-2 text-xs text-gray-400">
-                Syllabus
-              </span>
+              <span className="font-medium text-gray-900">Course Syllabus</span>
+              <span className="ml-2 text-xs text-gray-400">Syllabus</span>
             </div>
           </label>
         </div>
@@ -321,11 +336,16 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
         </p>
       )}
 
-      {hasContent && filteredFiles.length === 0 && filteredLinks.length === 0 && filteredAssignments.length === 0 && !showSyllabus && search && (
-        <p className="py-8 text-center text-gray-400">
-          No results for &ldquo;{search}&rdquo;
-        </p>
-      )}
+      {hasContent &&
+        filteredFiles.length === 0 &&
+        filteredLinks.length === 0 &&
+        filteredAssignments.length === 0 &&
+        !showSyllabus &&
+        search && (
+          <p className="py-8 text-center text-gray-400">
+            No results for &ldquo;{search}&rdquo;
+          </p>
+        )}
 
       {/* Uploaded files */}
       {uploads.length > 0 && (
@@ -357,7 +377,10 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
 
       {/* File upload area */}
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
@@ -410,13 +433,14 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks, assi
 
       {/* Start studying button — fixed at bottom */}
       {totalSelected > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pb-6 pt-4 pl-28">
+        <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6 pl-28">
           <button
             onClick={startStudying}
             className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#A89BD0] hover:shadow-xl active:bg-[#9889C0]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}
           >
-            Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""})
+            Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""}
+            )
           </button>
         </div>
       )}

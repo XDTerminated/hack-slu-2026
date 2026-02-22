@@ -5,7 +5,11 @@ import { generateQuestions } from "~/app/course/[courseId]/study/actions";
 import { recordStudySession } from "~/server/stats";
 import type { StudyQuestion } from "~/server/ai";
 import { Spinner } from "~/components/ui/spinner";
-import { saveQuizState, clearQuizState, type SavedQuizState } from "~/utils/quiz-state";
+import {
+  saveQuizState,
+  clearQuizState,
+  type SavedQuizState,
+} from "~/utils/quiz-state";
 
 type Props = {
   courseId: number;
@@ -32,8 +36,12 @@ export function StudySession({
   uploadIds,
   resumeState,
 }: Props) {
-  const [questions, setQuestions] = useState<StudyQuestion[]>(resumeState?.questions ?? []);
-  const [currentIndex, setCurrentIndex] = useState(resumeState?.currentIndex ?? 0);
+  const [questions, setQuestions] = useState<StudyQuestion[]>(
+    resumeState?.questions ?? [],
+  );
+  const [currentIndex, setCurrentIndex] = useState(
+    resumeState?.currentIndex ?? 0,
+  );
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(resumeState?.score ?? 0);
@@ -85,7 +93,15 @@ export function StudySession({
       startTime: startTimeRef.current,
       studyUrl,
     });
-  }, [courseId, courseName, studyUrl, questions, currentIndex, score, finished]);
+  }, [
+    courseId,
+    courseName,
+    studyUrl,
+    questions,
+    currentIndex,
+    score,
+    finished,
+  ]);
 
   // Save session to DB and clear localStorage when quiz finishes
   useEffect(() => {
@@ -262,7 +278,7 @@ export function StudySession({
 
       {/* Next button — fixed at bottom */}
       {selectedAnswer !== null && (
-        <div className="fixed right-0 bottom-0 left-0 z-50 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6">
+        <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6">
           <button
             onClick={nextQuestion}
             className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-4 text-lg font-medium text-white shadow-lg transition hover:bg-[#A89BD0] active:bg-[#9889C0]"
