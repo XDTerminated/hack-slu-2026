@@ -69,7 +69,7 @@ const navItems = [
 ];
 
 const settingsItem = {
-  href: "/dashboard",
+  href: "/settings",
   label: "Settings",
   icon: (
     <svg
@@ -136,9 +136,7 @@ export function Sidebar() {
                 key={item.label}
                 href={item.href}
                 className={`group flex items-center rounded-full p-3 transition-all duration-200 ease-out hover:bg-[#7E6FAE] hover:text-[#DCD8FF] ${
-                  isActive
-                    ? "bg-white/40 text-[#5B4D8A]"
-                    : "text-[#7E6FAE]"
+                  isActive ? "bg-white/40 text-[#5B4D8A]" : "text-[#7E6FAE]"
                 }`}
               >
                 <span className="shrink-0">{item.icon}</span>

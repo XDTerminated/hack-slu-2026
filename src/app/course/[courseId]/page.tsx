@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { friendlyCourseNames } from "~/app/courses/actions";
+import { CourseLeaderboard } from "~/components/leaderboard/course-leaderboard";
 import { Sidebar } from "~/components/nav/sidebar";
 import { ContentPicker } from "~/components/quiz/content-picker";
 import type { CanvasFile, PageSummary } from "~/server/canvas";
@@ -277,7 +278,7 @@ export default async function CoursePage({ params }: Props) {
           Select the content you want to study from.
         </p>
 
-        <div>
+        <div className="space-y-8">
           <ContentPicker
             courseId={courseIdNum}
             courseCode={courseName}
@@ -286,6 +287,8 @@ export default async function CoursePage({ params }: Props) {
             assignments={selectableAssignments}
             hasSyllabus={!!syllabusBody}
           />
+
+          <CourseLeaderboard courseId={courseIdNum} />
         </div>
       </main>
     </div>

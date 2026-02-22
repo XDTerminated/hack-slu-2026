@@ -22,3 +22,14 @@ export const studySessions = createTable(
     index("study_session_completed_idx").on(t.canvasUserId, t.completedAt),
   ],
 );
+
+/** Canvas users — populated at login to support leaderboard */
+export const users = createTable("user", (d) => ({
+  canvasUserId: d.integer().primaryKey(),
+  name: d.varchar({ length: 255 }).notNull(),
+  anonymous: d.boolean().notNull().default(false),
+  updatedAt: d
+    .timestamp({ withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+}));

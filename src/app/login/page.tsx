@@ -4,6 +4,8 @@ import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { getCourses, getSelf } from "~/server/canvas";
+import { db } from "~/server/db";
+import { users } from "~/server/db/schema";
 import { getSession } from "~/server/session";
 
 async function loginAction(formData: FormData) {
@@ -19,6 +21,15 @@ async function loginAction(formData: FormData) {
       getSelf(token.trim()),
     ]);
     userId = self.id;
+
+    // Store user name for leaderboard (always sync Canvas name)
+    await db
+      .insert(users)
+      .values({ canvasUserId: self.id, name: self.name })
+      .onConflictDoUpdate({
+        target: users.canvasUserId,
+        set: { name: self.name, updatedAt: new Date() },
+      });
   } catch {
     redirect("/login?error=invalid");
   }

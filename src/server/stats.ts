@@ -3,7 +3,7 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import { getCourses, getSelf } from "~/server/canvas";
 import { db } from "~/server/db";
-import { studySessions } from "~/server/db/schema";
+import { studySessions, users } from "~/server/db/schema";
 import { getSession } from "~/server/session";
 
 /** Resolve the Canvas user ID, backfilling session if needed */
@@ -15,6 +15,16 @@ async function resolveUserId(): Promise<number | null> {
     const self = await getSelf(session.canvasToken);
     session.canvasUserId = self.id;
     await session.save();
+
+    // Backfill user name for leaderboard (always sync Canvas name)
+    await db
+      .insert(users)
+      .values({ canvasUserId: self.id, name: self.name })
+      .onConflictDoUpdate({
+        target: users.canvasUserId,
+        set: { name: self.name, updatedAt: new Date() },
+      });
+
     return self.id;
   } catch {
     return null;
@@ -235,4 +245,83 @@ async function calculateStreak(userId: number): Promise<number> {
   }
 
   return streak;
+}
+
+export type LeaderboardEntry = {
+  canvasUserId: number;
+  name: string;
+  quizzesCompleted: number;
+  questionsAnswered: number;
+  correctAnswers: number;
+  accuracyPercent: number;
+};
+
+export async function getCourseLeaderboard(
+  courseId: number,
+): Promise<{ entries: LeaderboardEntry[]; currentUserId: number | null }> {
+  const userId = await resolveUserId();
+
+  const rows = await db
+    .select({
+      canvasUserId: studySessions.canvasUserId,
+      name: sql<string>`CASE WHEN ${users.anonymous} = true THEN 'Anonymous' ELSE COALESCE(${users.name}, 'Anonymous') END`,
+      quizzes: sql<number>`COUNT(*)`,
+      questions: sql<number>`COALESCE(SUM(${studySessions.totalQuestions}), 0)`,
+      correct: sql<number>`COALESCE(SUM(${studySessions.score}), 0)`,
+    })
+    .from(studySessions)
+    .leftJoin(users, eq(studySessions.canvasUserId, users.canvasUserId))
+    .where(eq(studySessions.courseId, courseId))
+    .groupBy(studySessions.canvasUserId, users.name)
+    .orderBy(sql`COALESCE(SUM(${studySessions.score}), 0) DESC`);
+
+  const entries: LeaderboardEntry[] = rows.map((r) => {
+    const questions = Number(r.questions);
+    const correct = Number(r.correct);
+    return {
+      canvasUserId: r.canvasUserId,
+      name: r.name,
+      quizzesCompleted: Number(r.quizzes),
+      questionsAnswered: questions,
+      correctAnswers: correct,
+      accuracyPercent:
+        questions > 0 ? Math.round((correct / questions) * 100) : 0,
+    };
+  });
+
+  return { entries, currentUserId: userId };
+}
+
+export async function getUserSettings(): Promise<{
+  name: string;
+  anonymous: boolean;
+} | null> {
+  const userId = await resolveUserId();
+  if (!userId) return null;
+
+  const rows = await db
+    .select({ name: users.name, anonymous: users.anonymous })
+    .from(users)
+    .where(eq(users.canvasUserId, userId))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function setAnonymous(
+  anonymous: boolean,
+): Promise<{ ok: boolean; error?: string }> {
+  const userId = await resolveUserId();
+  if (!userId) return { ok: false, error: "Not authenticated" };
+
+  try {
+    await db
+      .update(users)
+      .set({ anonymous, updatedAt: new Date() })
+      .where(eq(users.canvasUserId, userId));
+    return { ok: true };
+  } catch (err) {
+    console.error("[setAnonymous] DB update failed:", err);
+    return { ok: false, error: String(err) };
+  }
 }
