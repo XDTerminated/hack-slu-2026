@@ -6,7 +6,11 @@ import { StudySession } from "~/components/quiz/study-session";
 
 type Props = {
   params: Promise<{ courseId: string }>;
+<<<<<<< Updated upstream
   searchParams: Promise<{ files?: string; pages?: string }>;
+=======
+  searchParams: Promise<{ files?: string; links?: string; uploads?: string }>;
+>>>>>>> Stashed changes
 };
 
 export default async function StudyPage({ params, searchParams }: Props) {
@@ -16,7 +20,11 @@ export default async function StudyPage({ params, searchParams }: Props) {
   }
 
   const { courseId } = await params;
+<<<<<<< Updated upstream
   const { files, pages } = await searchParams;
+=======
+  const { files, links, uploads } = await searchParams;
+>>>>>>> Stashed changes
   const courseIdNum = parseInt(courseId, 10);
 
   const fileIds = (files ?? "")
@@ -28,7 +36,15 @@ export default async function StudyPage({ params, searchParams }: Props) {
     .split(",")
     .filter((s) => s.length > 0);
 
+<<<<<<< Updated upstream
   if (fileIds.length === 0 && pageUrls.length === 0) {
+=======
+  const uploadIds = (uploads ?? "")
+    .split(",")
+    .filter((s) => s.length > 0);
+
+  if (fileIds.length === 0 && linkUrls.length === 0 && uploadIds.length === 0) {
+>>>>>>> Stashed changes
     return (
       <div className="relative min-h-screen bg-[#FAFAFA]">
         <Sidebar />
@@ -50,6 +66,7 @@ export default async function StudyPage({ params, searchParams }: Props) {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       <Sidebar />
+<<<<<<< Updated upstream
 
       <main className="pl-28 pr-10 pt-8 pb-16">
         {/* Header */}
@@ -69,13 +86,17 @@ export default async function StudyPage({ params, searchParams }: Props) {
               &larr; Back to content
             </Link>
           </div>
+=======
+      <main className="pl-28 pr-10 pt-8 pb-16">
+        <div className="mx-auto max-w-2xl">
+          <StudySession
+            courseId={courseIdNum}
+            fileIds={fileIds}
+            linkUrls={linkUrls}
+            uploadIds={uploadIds}
+          />
+>>>>>>> Stashed changes
         </div>
-
-        <StudySession
-          courseId={courseIdNum}
-          fileIds={fileIds}
-          pageUrls={pageUrls}
-        />
       </main>
     </div>
   );

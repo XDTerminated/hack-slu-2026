@@ -2,7 +2,12 @@
 const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
+<<<<<<< Updated upstream
 import { getFile, downloadFile, getPage } from "./canvas";
+=======
+import { parseOffice } from "officeparser";
+import { getFile, downloadFile, getPage, getAssignment } from "./canvas";
+>>>>>>> Stashed changes
 import { htmlToText } from "~/utils/html-to-text";
 import {
   extractLinks,
@@ -111,6 +116,24 @@ async function fetchAndExtract(
       return pdf.text ? `## ${label}\n\n${pdf.text}` : "";
     }
 
+<<<<<<< Updated upstream
+=======
+    // Office documents (pptx, docx, xlsx, etc.)
+    const isOffice =
+      contentType.includes("presentation") ||
+      contentType.includes("powerpoint") ||
+      contentType.includes("wordprocessing") ||
+      contentType.includes("msword") ||
+      contentType.includes("spreadsheet") ||
+      contentType.includes("excel") ||
+      /\.(pptx?|docx?|xlsx?)$/i.test(downloadUrl);
+    if (isOffice) {
+      const ast = await parseOffice(buffer);
+      const text = ast.toText();
+      return text ? `## ${label}\n\n${text}` : "";
+    }
+
+>>>>>>> Stashed changes
     if (contentType.includes("html")) {
       const text = htmlToText(buffer.toString("utf-8"));
       return text ? `## ${label}\n\n${text}` : "";
@@ -144,6 +167,24 @@ async function extractFromContentType(
     return `## ${name}\n\n${pdf.text}`;
   }
 
+<<<<<<< Updated upstream
+=======
+  // Office documents (pptx, docx, xlsx, etc.)
+  if (
+    contentType.includes("presentation") ||
+    contentType.includes("powerpoint") ||
+    contentType.includes("wordprocessing") ||
+    contentType.includes("msword") ||
+    contentType.includes("spreadsheet") ||
+    contentType.includes("excel")
+  ) {
+    const buffer = await download();
+    const ast = await parseOffice(buffer);
+    const text = ast.toText();
+    return text ? `## ${name}\n\n${text}` : "";
+  }
+
+>>>>>>> Stashed changes
   if (
     contentType.startsWith("text/") ||
     contentType === "application/json" ||

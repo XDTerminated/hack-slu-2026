@@ -4,11 +4,17 @@ import { getSession } from "~/server/session";
 import { getCourses } from "~/server/canvas";
 import { fetchSelectedContent } from "~/server/content";
 import { generateStudyQuestions, type StudyQuestion } from "~/server/ai";
+import { getUploads } from "~/server/upload-store";
 
 export async function generateQuestions(
   courseId: number,
   fileIds: number[],
+<<<<<<< Updated upstream
   pageUrls: string[],
+=======
+  linkUrls: string[],
+  uploadIds: string[] = [],
+>>>>>>> Stashed changes
 ): Promise<{ questions: StudyQuestion[]; error?: string }> {
   try {
     const session = await getSession();
@@ -20,12 +26,14 @@ export async function generateQuestions(
     const course = courses.find((c) => c.id === courseId);
     const courseName = course?.name ?? "Unknown Course";
 
-    const content = await fetchSelectedContent(
+    const canvasContent = await fetchSelectedContent(
       session.canvasToken,
       courseId,
       fileIds,
       pageUrls,
     );
+    const uploadContent = uploadIds.length > 0 ? getUploads(uploadIds) : "";
+    const content = [canvasContent, uploadContent].filter(Boolean).join("\n\n---\n\n");
 
     if (!content.trim()) {
       return {

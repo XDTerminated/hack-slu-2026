@@ -9,10 +9,18 @@ import { Spinner } from "~/components/ui/spinner";
 type Props = {
   courseId: number;
   fileIds: number[];
+<<<<<<< Updated upstream
   pageUrls: string[];
 };
 
 export function StudySession({ courseId, fileIds, pageUrls }: Props) {
+=======
+  linkUrls: string[];
+  uploadIds: string[];
+};
+
+export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) {
+>>>>>>> Stashed changes
   const [questions, setQuestions] = useState<StudyQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -23,9 +31,15 @@ export function StudySession({ courseId, fileIds, pageUrls }: Props) {
   const [finished, setFinished] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       setLoading(true);
+<<<<<<< Updated upstream
       const result = await generateQuestions(courseId, fileIds, pageUrls);
+=======
+      const result = await generateQuestions(courseId, fileIds, linkUrls, uploadIds);
+      if (cancelled) return;
+>>>>>>> Stashed changes
       if (result.error) {
         setError(result.error);
       } else {
@@ -34,7 +48,13 @@ export function StudySession({ courseId, fileIds, pageUrls }: Props) {
       setLoading(false);
     }
     void load();
+<<<<<<< Updated upstream
   }, [courseId, fileIds, pageUrls]);
+=======
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+>>>>>>> Stashed changes
 
   function handleAnswer(index: number) {
     if (selectedAnswer !== null) return;
