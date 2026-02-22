@@ -3,6 +3,7 @@ import {
   getCourseFiles,
   getCoursePages,
   getFrontPage,
+  getModuleItems,
   getModules,
 } from "~/server/canvas";
 import { getSession } from "~/server/session";
@@ -10,7 +11,6 @@ import {
   extractCanvasFileIds,
   extractEmbeddedHtmlUrls,
   extractExternalFileLinks,
-  extractLinks,
 } from "~/utils/extract-links";
 
 export async function GET(
@@ -68,35 +68,51 @@ export async function GET(
         ? extractExternalFileLinks(frontPage.body)
         : [],
     };
-
-    // Fetch embedded pages and show raw HTML + extracted links
-    if (embeddedUrls.length > 0) {
-      const embeddedResults = [];
-      for (const url of embeddedUrls.slice(0, 3)) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) {
-            embeddedResults.push({ url, error: `HTTP ${res.status}` });
-            continue;
-          }
-          const html = await res.text();
-          const base = url.substring(0, url.lastIndexOf("/") + 1);
-          embeddedResults.push({
-            url,
-            htmlLength: html.length,
-            htmlSnippet: html.slice(0, 5000),
-            extractedWithBase: extractExternalFileLinks(html, base),
-            extractedWithoutBase: extractExternalFileLinks(html),
-            allLinks: extractLinks(html),
-          });
-        } catch (e: unknown) {
-          embeddedResults.push({ url, error: String(e) });
-        }
-      }
-      debug.embeddedPages = embeddedResults;
-    }
   } else {
     debug.frontPage = frontPage;
+  }
+
+  // Module details — the key debug info
+  if (Array.isArray(modules)) {
+    const moduleDetails = [];
+    for (const mod of modules) {
+      const inlineCount = mod.items?.length ?? 0;
+      const truncated = mod.items_count > inlineCount;
+
+      let allItems = mod.items ?? [];
+      if (truncated) {
+        allItems = await getModuleItems(token, cid, mod.id).catch(() => []);
+      }
+
+      const fileItems = allItems.filter((i) => i.type === "File");
+      const pageItems = allItems.filter((i) => i.type === "Page");
+      const extUrlItems = allItems.filter((i) => i.type === "ExternalUrl");
+
+      moduleDetails.push({
+        id: mod.id,
+        name: mod.name,
+        items_count: mod.items_count,
+        inline_items: inlineCount,
+        truncated,
+        total_fetched: allItems.length,
+        files: fileItems.map((i) => ({
+          title: i.title,
+          content_id: i.content_id,
+          type: i.type,
+        })),
+        pages: pageItems.map((i) => ({
+          title: i.title,
+          page_url: i.page_url,
+        })),
+        externalUrls: extUrlItems.map((i) => ({
+          title: i.title,
+          url: i.external_url,
+        })),
+      });
+    }
+    debug.modules = { count: modules.length, details: moduleDetails };
+  } else {
+    debug.modules = modules;
   }
 
   return NextResponse.json(debug, {
