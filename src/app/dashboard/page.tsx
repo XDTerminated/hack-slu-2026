@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getSession } from "~/server/session";
-import { getCourses } from "~/server/canvas";
-import { NavBar } from "~/components/nav/nav-bar";
-import { Card } from "~/components/ui/card";
+import { Sidebar } from "~/components/nav/sidebar";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -11,42 +8,130 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const courses = await getCourses(session.canvasToken);
-
   return (
-    <>
-      <NavBar />
-      <main className="min-h-screen bg-gray-50 p-8">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Your Courses
-          </h1>
-          <p className="mb-8 text-gray-600">
-            Select a course to start studying
-          </p>
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <Sidebar />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {courses.map((course) => (
-              <Link key={course.id} href={`/course/${course.id}`}>
-                <Card className="transition hover:border-blue-300 hover:shadow-md">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {course.name}
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {course.course_code}
-                  </p>
-                </Card>
-              </Link>
-            ))}
+      {/* Main content */}
+      <main className="pt-8 pr-10 pb-16 pl-28">
+        {/* Header */}
+        <div className="mb-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/cognify-logo-purple.svg"
+            alt="Cognify"
+            style={{ width: "200px", height: "auto", maxWidth: "none" }}
+          />
+        </div>
+
+        {/* Title row */}
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <p
+              className="text-lg text-[#DCD8FF]"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              Today&apos;s
+            </p>
+            <h1
+              className="text-5xl text-[#DCD8FF]"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              Dashboard
+            </h1>
           </div>
 
-          {courses.length === 0 && (
-            <p className="text-center text-gray-500">
-              No active courses found. Check your Canvas API token.
-            </p>
-          )}
+          {/* Time range pills */}
+          <div className="flex gap-3">
+            <button className="rounded-full bg-[#DCD8FF] px-6 py-2 text-sm font-medium text-white" style={{ fontFamily: "var(--font-josefin-sans)" }}>
+              Today
+            </button>
+            <button className="rounded-full border-2 border-[#DCD8FF] px-6 py-2 text-sm font-medium text-[#DCD8FF]" style={{ fontFamily: "var(--font-josefin-sans)" }}>
+              Week
+            </button>
+            <button className="rounded-full border-2 border-[#DCD8FF] px-6 py-2 text-sm font-medium text-[#DCD8FF]" style={{ fontFamily: "var(--font-josefin-sans)" }}>
+              Month
+            </button>
+          </div>
+        </div>
+
+        {/* Stats bento grid */}
+        <div className="grid grid-cols-12 grid-rows-[200px_200px] gap-6">
+          {/* Row 1, left — empty placeholder (wide) */}
+          <div className="col-span-5 flex items-center justify-center rounded-3xl bg-white shadow-sm" />
+
+          {/* Row 1, middle — Study Time (small square) */}
+          <div className="col-span-3 flex items-center justify-center rounded-3xl bg-white shadow-sm">
+            <div className="flex gap-2">
+              <span
+                className="text-8xl font-bold text-[#797979]"
+                style={{
+                  fontFamily: "var(--font-average-sans)",
+                }}
+              >
+                0
+              </span>
+              <div className="flex flex-col items-center justify-center pt-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/time.svg"
+                  alt="Clock"
+                  style={{ width: "36px", height: "36px", maxWidth: "none" }}
+                />
+                <span
+                  className="text-xl text-[#797979]"
+                  style={{ fontFamily: "var(--font-average-sans)" }}
+                >
+                  mins
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 1+2, right — tall card spanning 2 rows */}
+          <div className="col-span-4 row-span-2 flex items-center justify-center rounded-3xl bg-white shadow-sm" />
+
+          {/* Row 2, left — Day Streak (small square) */}
+          <div className="col-span-3 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/streak.svg"
+                alt="Streak"
+                style={{ width: "80px", height: "auto", maxWidth: "none" }}
+              />
+              <span
+                className="absolute inset-0 flex items-center justify-center text-5xl font-bold text-[#FFAB44]"
+                style={{
+                  fontFamily: "var(--font-average-sans)",
+                  paddingTop: "16px",
+                  WebkitTextStroke: "3px #FFAB44",
+                }}
+              >
+                0
+              </span>
+              <span
+                className="absolute inset-0 flex items-center justify-center text-5xl font-bold text-white"
+                style={{
+                  fontFamily: "var(--font-average-sans)",
+                  paddingTop: "16px",
+                }}
+              >
+                0
+              </span>
+            </div>
+            <span
+              className="text-2xl font-semibold text-[#FFAB44]"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              Day Streak
+            </span>
+          </div>
+
+          {/* Row 2, middle — empty placeholder (wide) */}
+          <div className="col-span-5 flex items-center justify-center rounded-3xl bg-white shadow-sm" />
         </div>
       </main>
-    </>
+    </div>
   );
 }

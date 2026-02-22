@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
+
 import { getSession } from "~/server/session";
 import { getCourses, getCourseFiles, getCoursePages } from "~/server/canvas";
-import { NavBar } from "~/components/nav/nav-bar";
+import { Sidebar } from "~/components/nav/sidebar";
 import { ContentPicker } from "~/components/quiz/content-picker";
 
 type Props = {
@@ -39,31 +39,37 @@ export default async function CoursePage({ params }: Props) {
   });
 
   return (
-    <>
-      <NavBar />
-      <main className="min-h-screen bg-gray-50 p-8">
-        <div className="mx-auto max-w-4xl">
-          <Link
-            href="/dashboard"
-            className="mb-4 inline-block text-sm text-blue-600 hover:underline"
-          >
-            &larr; Back to courses
-          </Link>
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <Sidebar />
 
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            {course?.name ?? "Course"}
-          </h1>
-          <p className="mb-8 text-gray-600">
-            Select the files and pages you want to study from.
-          </p>
+      {/* Main content */}
+      <main className="pl-28 pr-10 pt-8 pb-16">
+        {/* Header */}
+        <div className="mb-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/cognify-logo-purple.svg"
+            alt="Cognify"
+            style={{ width: "200px", height: "auto", maxWidth: "none" }}
+          />
+        </div>
 
+        <h1
+          className="mb-8 text-5xl text-[#DCD8FF]"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
+          My Courses
+        </h1>
+
+        <div>
           <ContentPicker
             courseId={courseIdNum}
+            courseCode={course?.course_code ?? course?.name ?? "Course"}
             files={readableFiles}
             pages={pages}
           />
         </div>
       </main>
-    </>
+    </div>
   );
 }

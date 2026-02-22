@@ -1,14 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "~/server/session";
 
-export default async function HomePage() {
-  const session = await getSession();
-  if (session.canvasToken) {
-    redirect("/dashboard");
-  }
-
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* ── Lavender header + wave ── */}

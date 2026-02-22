@@ -20,6 +20,8 @@ export type Course = {
   name: string;
   course_code: string;
   enrollment_term_id: number;
+  image_download_url?: string;
+  color?: string;
 };
 
 export type Module = {
@@ -81,7 +83,7 @@ export type Assignment = {
 export async function getCourses(token: string): Promise<Course[]> {
   return canvasFetch<Course[]>(
     token,
-    "/api/v1/courses?enrollment_type=student&enrollment_state=active&per_page=50",
+    "/api/v1/courses?enrollment_type=student&enrollment_state=active&per_page=50&include[]=course_image",
   );
 }
 
@@ -146,6 +148,16 @@ export async function getAssignment(
     token,
     `/api/v1/courses/${courseId}/assignments/${assignmentId}`,
   );
+}
+
+export async function getUserColors(
+  token: string,
+): Promise<Record<string, string>> {
+  const data = await canvasFetch<{ custom_colors: Record<string, string> }>(
+    token,
+    "/api/v1/users/self/colors",
+  );
+  return data.custom_colors;
 }
 
 export async function getCourseFiles(
