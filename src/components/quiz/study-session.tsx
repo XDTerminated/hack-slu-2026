@@ -9,10 +9,10 @@ import { Spinner } from "~/components/ui/spinner";
 type Props = {
   courseId: number;
   fileIds: number[];
-  pageUrls: string[];
+  linkUrls: string[];
 };
 
-export function StudySession({ courseId, fileIds, pageUrls }: Props) {
+export function StudySession({ courseId, fileIds, linkUrls }: Props) {
   const [questions, setQuestions] = useState<StudyQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -25,7 +25,7 @@ export function StudySession({ courseId, fileIds, pageUrls }: Props) {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const result = await generateQuestions(courseId, fileIds, pageUrls);
+      const result = await generateQuestions(courseId, fileIds, linkUrls);
       if (result.error) {
         setError(result.error);
       } else {
@@ -34,7 +34,7 @@ export function StudySession({ courseId, fileIds, pageUrls }: Props) {
       setLoading(false);
     }
     void load();
-  }, [courseId, fileIds, pageUrls]);
+  }, [courseId, fileIds, linkUrls]);
 
   function handleAnswer(index: number) {
     if (selectedAnswer !== null) return;

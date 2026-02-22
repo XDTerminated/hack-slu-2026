@@ -119,6 +119,16 @@ export async function getPage(
   );
 }
 
+export async function getFrontPage(
+  token: string,
+  courseId: number,
+): Promise<Page> {
+  return canvasFetch<Page>(
+    token,
+    `/api/v1/courses/${courseId}/front_page`,
+  );
+}
+
 export async function getFile(
   token: string,
   fileId: number,
@@ -177,5 +187,26 @@ export async function getCoursePages(
   return canvasFetch<PageSummary[]>(
     token,
     `/api/v1/courses/${courseId}/pages?per_page=100&sort=title&order=asc`,
+  );
+}
+
+export async function getCourseSyllabus(
+  token: string,
+  courseId: number,
+): Promise<string | null> {
+  const data = await canvasFetch<{ syllabus_body?: string }>(
+    token,
+    `/api/v1/courses/${courseId}?include[]=syllabus_body`,
+  );
+  return data.syllabus_body ?? null;
+}
+
+export async function getCourseAssignments(
+  token: string,
+  courseId: number,
+): Promise<Assignment[]> {
+  return canvasFetch<Assignment[]>(
+    token,
+    `/api/v1/courses/${courseId}/assignments?per_page=100&order_by=name`,
   );
 }
