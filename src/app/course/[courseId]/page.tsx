@@ -4,6 +4,7 @@ import { getSession } from "~/server/session";
 import { getCourses, getCourseFiles, getCoursePages } from "~/server/canvas";
 import { Sidebar } from "~/components/nav/sidebar";
 import { ContentPicker } from "~/components/quiz/content-picker";
+import { friendlyCourseNames } from "~/app/courses/actions";
 
 type Props = {
   params: Promise<{ courseId: string }>;
@@ -25,6 +26,11 @@ export default async function CoursePage({ params }: Props) {
   ]);
 
   const course = courses.find((c) => c.id === courseIdNum);
+
+  const friendly = await friendlyCourseNames(
+    course ? [{ id: course.id, name: course.name, course_code: course.course_code }] : [],
+  );
+  const courseName = friendly[courseIdNum]?.full ?? course?.name ?? "Course";
 
   // Filter files to only show readable content types
   const readableFiles = files.filter((f) => {
@@ -56,7 +62,7 @@ export default async function CoursePage({ params }: Props) {
 
         <h1
           className="mb-8 text-5xl text-[#DCD8FF]"
-          style={{ fontFamily: "var(--font-average-sans)" }}
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
         >
           My Courses
         </h1>
@@ -64,7 +70,7 @@ export default async function CoursePage({ params }: Props) {
         <div>
           <ContentPicker
             courseId={courseIdNum}
-            courseCode={course?.course_code ?? course?.name ?? "Course"}
+            courseCode={courseName}
             files={readableFiles}
             pages={pages}
           />

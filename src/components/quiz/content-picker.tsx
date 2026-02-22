@@ -76,7 +76,7 @@ export function ContentPicker({ courseId, courseCode, files, pages }: Props) {
       <div className="mb-6 flex items-center justify-between gap-4">
         <h2
           className="text-2xl font-bold text-[#DCD8FF]"
-          style={{ fontFamily: "var(--font-dm-serif)" }}
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
         >
           {courseCode}
         </h2>
@@ -119,6 +119,7 @@ export function ContentPicker({ courseId, courseCode, files, pages }: Props) {
                   ? toggleFile(topic.id)
                   : togglePage(topic.url)
               }
+              style={{ fontFamily: "var(--font-josefin-sans)" }}
               className={`w-full rounded-2xl border px-6 py-4 text-left text-base font-medium transition ${
                 isSelected
                   ? "border-[#DCD8FF] bg-[#DCD8FF]/40 text-gray-800"
@@ -168,7 +169,7 @@ export function ContentPicker({ courseId, courseCode, files, pages }: Props) {
         <button
           onClick={startStudying}
           className="mt-6 w-full rounded-full bg-[#DCD8FF] py-3.5 text-lg font-semibold text-white shadow-md transition hover:shadow-lg"
-          style={{ fontFamily: "var(--font-dm-serif)" }}
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
         >
           Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""})
         </button>
