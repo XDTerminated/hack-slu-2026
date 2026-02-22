@@ -35,6 +35,7 @@ export function ResumeStudySession({ courseId }: Props) {
       assignmentIds={[]}
       includeSyllabus={false}
       uploadIds={[]}
+      difficulty={state.difficulty ?? "medium"}
       resumeState={state}
     />
   );
