@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import type { CanvasFile } from "~/server/canvas";
+import { loadQuizState } from "~/utils/quiz-state";
 
 type Props = {
   courseId: number;
@@ -74,6 +75,7 @@ export function ContentPicker({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   function toggleFile(fileId: number) {
     setSelectedFiles((prev) => {
@@ -440,13 +442,61 @@ export function ContentPicker({
         <div className="fixed right-0 bottom-0 left-0 z-50 bg-linear-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6 pl-28">
           <button
             type="button"
-            onClick={startStudying}
+            onClick={() => {
+              if (loadQuizState()) {
+                setShowConfirm(true);
+              } else {
+                startStudying();
+              }
+            }}
             className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#7E6FAE] py-3.5 text-lg font-semibold text-white shadow-lg transition hover:bg-[#6B5D9A] hover:shadow-xl active:bg-[#5B4D8A]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}
           >
             Start Studying ({totalSelected} item{totalSelected !== 1 ? "s" : ""}
             )
           </button>
+        </div>
+      )}
+
+      {/* Confirmation popup */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+            <h2
+              className="mb-3 text-xl font-bold text-gray-800"
+              style={{ fontFamily: "var(--font-josefin-sans)" }}
+            >
+              Are you sure?
+            </h2>
+            <p
+              className="mb-6 text-gray-500"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              Are you sure you want to make a new quiz? It&apos;s going to
+              overwrite the old quiz.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 cursor-pointer rounded-full border-2 border-gray-300 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+                style={{ fontFamily: "var(--font-josefin-sans)" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirm(false);
+                  startStudying();
+                }}
+                className="flex-1 cursor-pointer rounded-full bg-[#7E6FAE] py-2.5 text-sm font-medium text-white transition hover:bg-[#6B5D9A]"
+                style={{ fontFamily: "var(--font-josefin-sans)" }}
+              >
+                Yes, overwrite
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

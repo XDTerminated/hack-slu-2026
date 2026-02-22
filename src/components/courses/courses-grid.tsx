@@ -126,17 +126,20 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                   href={`/course/${course.id}`}
                   className={sizeClass}
                 >
-                  <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:shadow-lg hover:border-[#7E6FAE]/40">
+                  <div className="group flex h-full flex-col justify-end overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:border-[#7E6FAE]/40 hover:shadow-xl">
                     {course.image_download_url ? (
-                      // biome-ignore lint/performance/noImgElement: Img required
-                      <img
-                        src={course.image_download_url}
-                        alt=""
-                        className="h-full w-full flex-1 object-cover"
-                      />
+                      <div className="relative flex-1 overflow-hidden">
+                        {/* biome-ignore lint/performance/noImgElement: Img required */}
+                        <img
+                          src={course.image_download_url}
+                          alt=""
+                          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-[#7E6FAE]/0 transition-colors duration-300 group-hover:bg-[#7E6FAE]/10" />
+                      </div>
                     ) : (
                       <div
-                        className="flex-1"
+                        className="flex-1 transition-all duration-300 group-hover:brightness-110"
                         style={{
                           backgroundColor:
                             purpleShades[purpleIndex++ % purpleShades.length],
@@ -145,12 +148,12 @@ export function CoursesGrid({ courses, friendlyNames }: Props) {
                     )}
                     <div className="min-w-0 p-4">
                       <h2
-                        className="truncate text-lg font-bold text-[#7E6FAE]"
+                        className="truncate text-lg font-bold text-[#7E6FAE] transition-colors duration-300 group-hover:text-[#5B4D8A]"
                         style={{ fontFamily: "var(--font-josefin-sans)" }}
                       >
                         {friendlyNames[course.id]?.full ?? course.name}
                       </h2>
-                      <p className="mt-1 truncate text-xs text-gray-400">
+                      <p className="mt-1 truncate text-xs text-gray-400 transition-colors duration-300 group-hover:text-[#7E6FAE]">
                         {friendlyNames[course.id]?.short ?? course.course_code}
                       </p>
                     </div>

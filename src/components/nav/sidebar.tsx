@@ -94,11 +94,11 @@ export function Sidebar() {
 
   return (
     <aside className="fixed inset-y-4 left-4 z-50">
-      <div className="flex h-full flex-col items-center justify-between rounded-full bg-[#DCD8FF] px-3 py-6 shadow-lg">
-        <div className="flex flex-col items-center gap-4 pt-4">
+      <div className="flex h-full flex-col items-start justify-between overflow-visible rounded-full bg-[#DCD8FF] px-3 py-6 shadow-lg">
+        <div className="flex flex-col items-start gap-4 pt-4">
           {/* Cognify brand mark + half cog */}
           <span
-            className="text-[12px] font-bold tracking-wider text-[#7E6FAE]"
+            className="self-center text-[12px] font-bold tracking-wider text-[#7E6FAE]"
             style={{
               fontFamily: "var(--font-josefin-sans)",
               letterSpacing: "0.08em",
@@ -106,7 +106,7 @@ export function Sidebar() {
           >
             cognify
           </span>
-          <div className="-mt-4 mb-6">
+          <div className="-mt-4 mb-6 self-center">
             <div className="overflow-hidden" style={{ height: 22 }}>
               <svg
                 width="44"
@@ -135,14 +135,19 @@ export function Sidebar() {
               <Link
                 key={item.label}
                 href={item.href}
-                title={item.label}
-                className={`rounded-full p-3 transition ${
+                className={`group flex items-center rounded-full p-3 transition-all duration-200 ease-out hover:bg-[#7E6FAE] hover:text-[#DCD8FF] ${
                   isActive
                     ? "bg-white/40 text-[#5B4D8A]"
-                    : "text-[#7E6FAE] hover:bg-white/30 hover:text-[#5B4D8A]"
+                    : "text-[#7E6FAE]"
                 }`}
               >
-                {item.icon}
+                <span className="shrink-0">{item.icon}</span>
+                <span
+                  className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium text-white opacity-0 transition-all duration-200 ease-out group-hover:ml-2 group-hover:max-w-32 group-hover:pr-1 group-hover:opacity-100"
+                  style={{ fontFamily: "var(--font-josefin-sans)" }}
+                >
+                  {item.label}
+                </span>
               </Link>
             );
           })}
@@ -150,10 +155,15 @@ export function Sidebar() {
 
         <Link
           href={settingsItem.href}
-          title={settingsItem.label}
-          className="rounded-full p-3 text-[#7E6FAE] transition hover:bg-white/30 hover:text-[#5B4D8A]"
+          className="group flex items-center rounded-full p-3 text-[#7E6FAE] transition-all duration-200 ease-out hover:bg-[#7E6FAE] hover:text-[#DCD8FF]"
         >
-          {settingsItem.icon}
+          <span className="shrink-0">{settingsItem.icon}</span>
+          <span
+            className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium text-white opacity-0 transition-all duration-200 ease-out group-hover:ml-2 group-hover:max-w-32 group-hover:pr-1 group-hover:opacity-100"
+            style={{ fontFamily: "var(--font-josefin-sans)" }}
+          >
+            {settingsItem.label}
+          </span>
         </Link>
       </div>
     </aside>

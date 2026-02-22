@@ -93,7 +93,7 @@ Based on ALL the provided course material, create a realistic final exam with mi
 
 Return valid JSON in this exact format:
 {
-  "title": "Final Exam",
+  "title": "Introduction to Psychology - Final Exam",
   "instructions": "Read each question carefully. Show all work where applicable. You have 2 hours to complete this exam.",
   "totalPoints": 100,
   "sections": [
@@ -153,7 +153,8 @@ Rules:
 - Short answer should require explanation and application
 - Essay questions should require deep analysis and synthesis across topics
 - The "answer" field is for the answer key — make it thorough
-- IMPORTANT: Only use English text and standard ASCII characters. For math, use plain notation like x^2, sqrt(x), a*b, etc.`,
+- IMPORTANT: Only use English text and standard ASCII characters. For math, use plain notation like x^2, sqrt(x), a*b, etc.
+- IMPORTANT: The "title" must be specific to the subject matter. Identify the course or topic from the material and use it (e.g. "Organic Chemistry - Final Exam", "HIST 101: World History - Final Exam"). Never use a generic title like just "Final Exam".`,
       },
       {
         role: "user",

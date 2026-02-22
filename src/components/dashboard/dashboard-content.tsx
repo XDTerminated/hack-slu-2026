@@ -10,7 +10,12 @@ import {
   getCourseNames,
   getDashboardStats,
 } from "~/server/stats";
-import { loadQuizState, type SavedQuizState } from "~/utils/quiz-state";
+import {
+  loadExamState,
+  loadQuizState,
+  type SavedExamState,
+  type SavedQuizState,
+} from "~/utils/quiz-state";
 
 type Range = "today" | "week" | "month";
 
@@ -33,9 +38,11 @@ export function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [courseNames, setCourseNames] = useState<Record<number, string>>({});
   const [savedQuiz, setSavedQuiz] = useState<SavedQuizState | null>(null);
+  const [savedExam, setSavedExam] = useState<SavedExamState | null>(null);
 
   useEffect(() => {
     setSavedQuiz(loadQuizState());
+    setSavedExam(loadExamState());
   }, []);
 
   useEffect(() => {
@@ -136,15 +143,15 @@ export function DashboardContent() {
       <div
         className={`grid grid-cols-12 grid-rows-[200px_200px] gap-6 transition-opacity ${loading ? "opacity-50" : "opacity-100"}`}
       >
-        {/* Row 1, left — Resume Quiz or Quizzes Completed */}
+        {/* Row 1, left — Resume Quiz / Resume Exam / Quizzes Completed */}
         {savedQuiz ? (
           <button
             type="button"
             onClick={resumeQuiz}
-            className="col-span-5 flex cursor-pointer flex-col items-center justify-center rounded-3xl bg-[#7E6FAE] shadow-sm transition hover:bg-[#6B5D9A] hover:shadow-md"
+            className="col-span-5 flex cursor-pointer flex-col items-center justify-center rounded-3xl bg-[#7E6FAE] shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#6B5D9A] hover:shadow-xl"
           >
             <span
-              className="text-lg text-white/70"
+              className="text-lg text-white/70 transition-colors duration-300"
               style={{ fontFamily: "var(--font-average-sans)" }}
             >
               {savedQuiz.courseName}
@@ -156,23 +163,48 @@ export function DashboardContent() {
               Resume Quiz
             </span>
             <span
-              className="mt-2 text-sm text-white/50"
+              className="mt-2 text-sm text-white/50 transition-colors duration-300"
               style={{ fontFamily: "var(--font-average-sans)" }}
             >
               {savedQuiz.currentIndex + 1}/{savedQuiz.questions.length}{" "}
               questions
             </span>
           </button>
-        ) : (
-          <div className="col-span-5 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
+        ) : savedExam ? (
+          <button
+            type="button"
+            onClick={() => router.push("/upload")}
+            className="col-span-5 flex cursor-pointer flex-col items-center justify-center rounded-3xl bg-[#7E6FAE] shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#6B5D9A] hover:shadow-xl"
+          >
             <span
-              className="text-7xl font-bold text-[#797979]"
+              className="text-lg text-white/70 transition-colors duration-300"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              {savedExam.name}
+            </span>
+            <span
+              className="mt-1 text-3xl font-bold text-white"
+              style={{ fontFamily: "var(--font-josefin-sans)" }}
+            >
+              Resume Mock Exam
+            </span>
+            <span
+              className="mt-2 text-sm text-white/50 transition-colors duration-300"
+              style={{ fontFamily: "var(--font-average-sans)" }}
+            >
+              {savedExam.exam.totalPoints} points
+            </span>
+          </button>
+        ) : (
+          <div className="group col-span-5 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl">
+            <span
+              className="text-7xl font-bold text-[#797979] transition-colors duration-300 group-hover:text-[#7E6FAE]"
               style={{ fontFamily: "var(--font-average-sans)" }}
             >
               {s.quizzesCompleted}
             </span>
             <span
-              className="mt-2 text-xl text-[#B0B0B0]"
+              className="mt-2 text-xl text-[#B0B0B0] transition-colors duration-300 group-hover:text-[#7E6FAE]"
               style={{ fontFamily: "var(--font-average-sans)" }}
             >
               {s.quizzesCompleted === 1 ? "Quiz" : "Quizzes"} Completed
@@ -181,10 +213,10 @@ export function DashboardContent() {
         )}
 
         {/* Row 1, middle — Study Time */}
-        <div className="col-span-3 flex items-center justify-center rounded-3xl bg-white shadow-sm">
+        <div className="group col-span-3 flex items-center justify-center rounded-3xl bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl">
           <div className="flex gap-2">
             <span
-              className="text-8xl font-bold text-[#797979]"
+              className="text-8xl font-bold text-[#797979] transition-colors duration-300 group-hover:text-[#7E6FAE]"
               style={{ fontFamily: "var(--font-average-sans)" }}
             >
               {s.studyMinutes}
@@ -195,10 +227,11 @@ export function DashboardContent() {
                 height={36}
                 src="/time.svg"
                 alt="Clock"
+                className="transition-transform duration-300 group-hover:rotate-12"
                 style={{ maxWidth: "none" }}
               />
               <span
-                className="text-xl text-[#797979]"
+                className="text-xl text-[#797979] transition-colors duration-300 group-hover:text-[#7E6FAE]"
                 style={{ fontFamily: "var(--font-average-sans)" }}
               >
                 mins
@@ -208,7 +241,7 @@ export function DashboardContent() {
         </div>
 
         {/* Row 1+2, right — Per-Course Accuracy (tall card) */}
-        <div className="col-span-4 row-span-2 flex flex-col rounded-3xl bg-white shadow-sm">
+        <div className="group col-span-4 row-span-2 flex flex-col rounded-3xl bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl">
           <span
             className="pt-5 text-center text-xl text-[#B0B0B0]"
             style={{ fontFamily: "var(--font-average-sans)" }}
@@ -241,10 +274,10 @@ export function DashboardContent() {
                         )
                       : 0;
                   return (
-                    <div key={c.courseId}>
+                    <div key={c.courseId} className="group/row rounded-xl px-2 py-1 transition-colors duration-200 hover:bg-[#F8F6FF]">
                       <div className="flex items-baseline justify-between">
                         <span
-                          className="truncate text-sm text-[#797979]"
+                          className="truncate text-sm text-[#797979] transition-colors duration-200 group-hover/row:text-[#5B4D8A]"
                           style={{ fontFamily: "var(--font-average-sans)" }}
                         >
                           {courseNames[c.courseId] ?? `Course ${c.courseId}`}
@@ -258,12 +291,12 @@ export function DashboardContent() {
                       </div>
                       <div className="mt-1 h-2 rounded-full bg-[#F0EEF8]">
                         <div
-                          className="h-2 rounded-full bg-[#7E6FAE]"
+                          className="h-2 rounded-full bg-[#7E6FAE] transition-shadow duration-200 group-hover/row:shadow-[0_0_8px_rgba(126,111,174,0.4)]"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
                       <span
-                        className="text-xs text-[#D0D0D0]"
+                        className="text-xs text-[#D0D0D0] transition-colors duration-200 group-hover/row:text-[#7E6FAE]"
                         style={{ fontFamily: "var(--font-average-sans)" }}
                       >
                         {c.correctAnswers}/{c.questionsAnswered} correct
@@ -277,13 +310,14 @@ export function DashboardContent() {
         </div>
 
         {/* Row 2, left — Day Streak */}
-        <div className="col-span-3 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm">
-          <div className="relative">
+        <div className="group col-span-3 flex flex-col items-center justify-center rounded-3xl bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl">
+          <div className="relative transition-transform duration-300 group-hover:scale-110">
             <Image
               width={0}
               height={0}
               src="/streak.svg"
               alt="Streak"
+              className="transition-all duration-300 group-hover:drop-shadow-[0_0_8px_rgba(255,171,68,0.5)]"
               style={{ width: "80px", height: "auto", maxWidth: "none" }}
             />
             <span
@@ -315,7 +349,7 @@ export function DashboardContent() {
         </div>
 
         {/* Row 2, middle — Activity Chart */}
-        <div className="col-span-5 rounded-3xl bg-white shadow-sm">
+        <div className="col-span-5 rounded-3xl bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl">
           <ActivityChart dailyActivity={s.dailyActivity} />
         </div>
       </div>

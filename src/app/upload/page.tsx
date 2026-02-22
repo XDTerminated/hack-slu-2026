@@ -1,10 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "~/components/nav/sidebar";
 import { Spinner } from "~/components/ui/spinner";
 import type { MockExam } from "~/server/ai";
 import { generateExam } from "~/app/upload/actions";
+import {
+  clearExamState,
+  loadExamState,
+  saveExamState,
+} from "~/utils/quiz-state";
 
 type UploadedFile = { id: string; name: string };
 
@@ -20,6 +25,13 @@ export default function UploadPage() {
   const [showAnswerKey, setShowAnswerKey] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [examError, setExamError] = useState<string | null>(null);
+  // Load saved exam from localStorage on mount
+  useEffect(() => {
+    const saved = loadExamState();
+    if (saved) {
+      setExam(saved.exam);
+    }
+  }, []);
 
   const uploadFile = useCallback(async (file: File) => {
     setUploading(true);
@@ -84,6 +96,8 @@ export default function UploadPage() {
       return;
     }
     setExam(result.exam);
+    const examName = uploads.map((u) => u.name.replace(/\.[^.]+$/, "")).join(", ");
+    saveExamState({ exam: result.exam, name: examName, createdAt: Date.now() });
     setGenerating(false);
   }
 
@@ -96,6 +110,7 @@ export default function UploadPage() {
     setShowAnswerKey(false);
     setUploads([]);
     setExamError(null);
+    clearExamState();
   }
 
   // ── Generating state ──
