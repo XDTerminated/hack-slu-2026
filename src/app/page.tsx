@@ -64,8 +64,8 @@ export default function HomePage() {
         </h1>
 
         <p className="mt-3 max-w-lg text-2xl leading-relaxed text-[#7E6FAE]">
-          Real-time cognitive insights personalize your lessons, adjust
-          difficulty, and bridge learning gaps as you study.
+          Personalize your lessons, get feedback, and bridge learning gaps as
+          you study.
         </p>
 
         <Link
