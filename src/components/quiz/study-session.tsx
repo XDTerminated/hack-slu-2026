@@ -21,6 +21,7 @@ type Props = {
   assignmentIds: number[];
   includeSyllabus: boolean;
   uploadIds: string[];
+  difficulty?: "easy" | "medium" | "hard";
   resumeState?: SavedQuizState;
 };
 
@@ -34,6 +35,7 @@ export function StudySession({
   assignmentIds,
   includeSyllabus,
   uploadIds,
+  difficulty = "medium",
   resumeState,
 }: Props) {
   const [questions, setQuestions] = useState<StudyQuestion[]>(
@@ -66,6 +68,7 @@ export function StudySession({
         assignmentIds,
         includeSyllabus,
         uploadIds,
+        difficulty,
       );
       if (cancelled) return;
       if (result.error) {
@@ -93,6 +96,7 @@ export function StudySession({
       score,
       startTime: startTimeRef.current,
       studyUrl,
+      difficulty,
     });
   }, [
     courseId,
@@ -212,13 +216,27 @@ export function StudySession({
 
   return (
     <div className="relative">
-      {/* Question counter — fixed top right of page */}
-      <span
-        className="fixed top-8 right-10 text-6xl font-bold text-[#7E6FAE]"
-        style={{ fontFamily: "var(--font-average-sans)" }}
-      >
-        {currentIndex + 1}/{questions.length}
-      </span>
+      {/* Question counter + difficulty — fixed top right of page */}
+      <div className="fixed top-8 right-10 text-right">
+        <span
+          className="text-6xl font-bold text-[#7E6FAE]"
+          style={{ fontFamily: "var(--font-average-sans)" }}
+        >
+          {currentIndex + 1}/{questions.length}
+        </span>
+        <span
+          className={`mt-1 block text-sm font-semibold uppercase tracking-wider ${
+            difficulty === "easy"
+              ? "text-green-500"
+              : difficulty === "hard"
+                ? "text-red-400"
+                : "text-[#7E6FAE]"
+          }`}
+          style={{ fontFamily: "var(--font-josefin-sans)" }}
+        >
+          {difficulty}
+        </span>
+      </div>
 
       {/* Question card */}
       <div className="mb-10 rounded-3xl bg-white p-8 shadow-sm">

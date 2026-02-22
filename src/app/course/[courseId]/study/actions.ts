@@ -14,6 +14,7 @@ export async function generateQuestions(
   assignmentIds: number[] = [],
   includeSyllabus = false,
   uploadIds: string[] = [],
+  difficulty: "easy" | "medium" | "hard" = "medium",
 ): Promise<{ questions: StudyQuestion[]; error?: string }> {
   try {
     const session = await getSession();
@@ -47,7 +48,7 @@ export async function generateQuestions(
       };
     }
 
-    const questions = await generateStudyQuestions(courseName, content);
+    const questions = await generateStudyQuestions(courseName, content, 10, difficulty);
     return { questions };
   } catch (err) {
     console.error("Failed to generate questions:", err);

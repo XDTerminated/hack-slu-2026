@@ -14,6 +14,7 @@ export async function generateStudyQuestions(
   courseName: string,
   content: string,
   count = 10,
+  difficulty: "easy" | "medium" | "hard" = "medium",
 ): Promise<StudyQuestion[]> {
   const trimmedContent = content.slice(0, 12000);
 
@@ -26,6 +27,7 @@ export async function generateStudyQuestions(
         role: "system",
         content: `You are a study assistant for a college course called "${courseName}".
 Generate exactly ${count} multiple-choice study questions based on the provided course material.
+Difficulty level: ${difficulty.toUpperCase()}
 
 Return valid JSON in this exact format:
 {
@@ -40,8 +42,15 @@ Return valid JSON in this exact format:
 }
 
 Rules:
-- Questions should test understanding, not just memorization
+${difficulty === "easy" ? `- Focus on basic recall and definitions
+- Questions should be straightforward with one clearly correct answer
+- Wrong options should be obviously different from the correct answer
+- Test fundamental concepts and terminology` : difficulty === "hard" ? `- Focus on analysis, synthesis, and application of concepts
+- Questions should require combining multiple ideas or applying concepts to new scenarios
+- Wrong options should be very plausible and closely related to the correct answer
+- Include questions that require critical thinking and deeper understanding` : `- Questions should test understanding, not just memorization
 - All 4 options should be plausible
+- Balance between recall and application questions`}
 - Explanations should be educational and concise
 - Cover different topics from the material
 - IMPORTANT: Only use English text and standard ASCII characters. For math, use plain notation like x^2, sqrt(x), a*b, det(A), R^n, etc. Never use Chinese, Japanese, or other non-Latin characters.`,

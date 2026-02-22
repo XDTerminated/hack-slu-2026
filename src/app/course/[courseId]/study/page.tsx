@@ -17,6 +17,7 @@ type Props = {
     syllabus?: string;
     uploads?: string;
     resume?: string;
+    difficulty?: string;
   }>;
 };
 
@@ -70,6 +71,11 @@ export default async function StudyPage({ params, searchParams }: Props) {
   const includeSyllabus = syllabus === "1";
 
   const uploadIds = (uploads ?? "").split(",").filter((s) => s.length > 0);
+
+  const difficultyNum = parseInt(sp.difficulty ?? "1", 10);
+  const difficulty = (
+    difficultyNum === 0 ? "easy" : difficultyNum === 2 ? "hard" : "medium"
+  ) as "easy" | "medium" | "hard";
 
   if (
     fileIds.length === 0 &&
@@ -129,6 +135,7 @@ export default async function StudyPage({ params, searchParams }: Props) {
             assignmentIds={assignmentIds}
             includeSyllabus={includeSyllabus}
             uploadIds={uploadIds}
+            difficulty={difficulty}
           />
         </div>
       </main>
