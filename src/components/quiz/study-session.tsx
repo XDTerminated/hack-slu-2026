@@ -3,24 +3,16 @@
 import { useState, useEffect } from "react";
 import { generateQuestions } from "~/app/course/[courseId]/study/actions";
 import type { StudyQuestion } from "~/server/ai";
-import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 
 type Props = {
   courseId: number;
   fileIds: number[];
-<<<<<<< Updated upstream
-  pageUrls: string[];
-};
-
-export function StudySession({ courseId, fileIds, pageUrls }: Props) {
-=======
   linkUrls: string[];
   uploadIds: string[];
 };
 
 export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) {
->>>>>>> Stashed changes
   const [questions, setQuestions] = useState<StudyQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -34,12 +26,8 @@ export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) 
     let cancelled = false;
     async function load() {
       setLoading(true);
-<<<<<<< Updated upstream
-      const result = await generateQuestions(courseId, fileIds, pageUrls);
-=======
       const result = await generateQuestions(courseId, fileIds, linkUrls, uploadIds);
       if (cancelled) return;
->>>>>>> Stashed changes
       if (result.error) {
         setError(result.error);
       } else {
@@ -48,13 +36,9 @@ export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) 
       setLoading(false);
     }
     void load();
-<<<<<<< Updated upstream
-  }, [courseId, fileIds, pageUrls]);
-=======
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
->>>>>>> Stashed changes
 
   function handleAnswer(index: number) {
     if (selectedAnswer !== null) return;
@@ -174,46 +158,56 @@ export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) 
               " bg-white border-2 border-gray-200 text-gray-700 hover:bg-[#DCD8FF] hover:border-[#DCD8FF] hover:text-white cursor-pointer";
           }
 
+          const showExplanationHere =
+            showExplanation && i === question.correctIndex;
+
           return (
-            <button
-              key={i}
-              onClick={() => handleAnswer(i)}
-              disabled={selectedAnswer !== null}
-              className={classes}
-              style={{ fontFamily: "var(--font-josefin-sans)" }}
-            >
-              {option}
-            </button>
+            <div key={i}>
+              <button
+                onClick={() => handleAnswer(i)}
+                disabled={selectedAnswer !== null}
+                className={classes}
+                style={{ fontFamily: "var(--font-josefin-sans)" }}
+              >
+                {option}
+              </button>
+              {showExplanationHere && (
+                <div className="mt-2 mb-1 rounded-2xl bg-[#F3F0FF] px-6 py-4 text-[#5B4D8A]">
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ fontFamily: "var(--font-josefin-sans)" }}
+                  >
+                    Explanation:
+                  </p>
+                  <p
+                    className="text-sm"
+                    style={{ fontFamily: "var(--font-average-sans)" }}
+                  >
+                    {question.explanation}
+                  </p>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {/* Explanation */}
-      {showExplanation && (
-        <div className="mt-8 rounded-3xl bg-[#F3F0FF] p-6 text-[#5B4D8A]">
-          <p
-            className="font-semibold"
+      {/* Spacer so fixed button doesn't overlap content */}
+      {selectedAnswer !== null && <div className="h-24" />}
+
+      {/* Next button — fixed at bottom */}
+      {selectedAnswer !== null && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pb-6 pt-4">
+          <button
+            onClick={nextQuestion}
+            className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-4 text-lg font-medium text-white shadow-lg transition hover:bg-[#A89BD0] active:bg-[#9889C0]"
             style={{ fontFamily: "var(--font-josefin-sans)" }}
           >
-            Explanation:
-          </p>
-          <p style={{ fontFamily: "var(--font-average-sans)" }}>
-            {question.explanation}
-          </p>
+            {currentIndex + 1 >= questions.length
+              ? "See Results"
+              : "Next Question"}
+          </button>
         </div>
-      )}
-
-      {/* Next button */}
-      {selectedAnswer !== null && (
-        <button
-          onClick={nextQuestion}
-          className="mt-8 w-full rounded-full bg-[#DCD8FF] py-4 text-lg font-medium text-white transition hover:bg-[#C8C2F0]"
-          style={{ fontFamily: "var(--font-josefin-sans)" }}
-        >
-          {currentIndex + 1 >= questions.length
-            ? "See Results"
-            : "Next Question"}
-        </button>
       )}
     </div>
   );

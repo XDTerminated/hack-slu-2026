@@ -2,12 +2,8 @@
 const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
-<<<<<<< Updated upstream
-import { getFile, downloadFile, getPage } from "./canvas";
-=======
 import { parseOffice } from "officeparser";
 import { getFile, downloadFile, getPage, getAssignment } from "./canvas";
->>>>>>> Stashed changes
 import { htmlToText } from "~/utils/html-to-text";
 import {
   extractLinks,
@@ -20,10 +16,16 @@ export async function fetchSelectedContent(
   courseId: number,
   fileIds: number[],
   pageUrls: string[],
+  assignmentIds: number[] = [],
+  linkUrls: string[] = [],
 ): Promise<string> {
   const results = await Promise.all([
     ...fileIds.map((id) => extractFileById(token, id)),
     ...pageUrls.map((url) => extractPageWithLinks(token, courseId, url)),
+    ...assignmentIds.map((id) =>
+      extractAssignmentWithLinks(token, courseId, id),
+    ),
+    ...linkUrls.map((url) => extractFromExternalLink(url)),
   ]);
 
   return results
@@ -63,7 +65,7 @@ async function extractPageWithLinks(
 
     const pageText = `## ${page.title}\n\n${htmlToText(page.body)}`;
 
-    // Find all links in the page HTML and fetch their content
+    // Find all external links and fetch their content
     const links = extractLinks(page.body);
     const linkTexts = await Promise.all(
       links.map((link) => extractFromExternalLink(link)),
@@ -75,17 +77,40 @@ async function extractPageWithLinks(
   }
 }
 
+// --- Assignment extraction + follow embedded links ---
+
+async function extractAssignmentWithLinks(
+  token: string,
+  courseId: number,
+  assignmentId: number,
+): Promise<string[]> {
+  try {
+    const assignment = await getAssignment(token, courseId, assignmentId);
+    if (!assignment.description) return [];
+
+    const text = htmlToText(assignment.description);
+    const assignmentText = `## ${assignment.name}\n\n${text}`;
+
+    const links = extractLinks(assignment.description);
+    const linkTexts = await Promise.all(
+      links.map((link) => extractFromExternalLink(link)),
+    );
+
+    return [assignmentText, ...linkTexts.filter(Boolean)];
+  } catch {
+    return [];
+  }
+}
+
 // --- External link extraction (Google Drive, direct files) ---
 
 async function extractFromExternalLink(url: string): Promise<string> {
   try {
-    // Google Drive / Google Docs link
     const gdriveUrl = getGoogleDriveDownloadUrl(url);
     if (gdriveUrl) {
       return await fetchAndExtract(gdriveUrl, url);
     }
 
-    // Direct file link (.pdf, .txt, etc.)
     if (isDirectFileUrl(url)) {
       return await fetchAndExtract(url, url);
     }
@@ -116,8 +141,6 @@ async function fetchAndExtract(
       return pdf.text ? `## ${label}\n\n${pdf.text}` : "";
     }
 
-<<<<<<< Updated upstream
-=======
     // Office documents (pptx, docx, xlsx, etc.)
     const isOffice =
       contentType.includes("presentation") ||
@@ -133,7 +156,6 @@ async function fetchAndExtract(
       return text ? `## ${label}\n\n${text}` : "";
     }
 
->>>>>>> Stashed changes
     if (contentType.includes("html")) {
       const text = htmlToText(buffer.toString("utf-8"));
       return text ? `## ${label}\n\n${text}` : "";
@@ -167,8 +189,6 @@ async function extractFromContentType(
     return `## ${name}\n\n${pdf.text}`;
   }
 
-<<<<<<< Updated upstream
-=======
   // Office documents (pptx, docx, xlsx, etc.)
   if (
     contentType.includes("presentation") ||
@@ -184,7 +204,6 @@ async function extractFromContentType(
     return text ? `## ${name}\n\n${text}` : "";
   }
 
->>>>>>> Stashed changes
   if (
     contentType.startsWith("text/") ||
     contentType === "application/json" ||

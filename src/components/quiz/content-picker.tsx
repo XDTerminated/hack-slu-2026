@@ -2,26 +2,15 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-<<<<<<< Updated upstream
-import type { CanvasFile, PageSummary } from "~/server/canvas";
-=======
 import type { CanvasFile } from "~/server/canvas";
->>>>>>> Stashed changes
 
 type Props = {
   courseId: number;
   courseCode: string;
   files: CanvasFile[];
-  pages: PageSummary[];
+  externalLinks: { url: string; title: string }[];
 };
 
-<<<<<<< Updated upstream
-export function ContentPicker({ courseId, courseCode, files, pages }: Props) {
-  const router = useRouter();
-  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
-  const [selectedPages, setSelectedPages] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState("");
-=======
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -66,7 +55,6 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
->>>>>>> Stashed changes
 
   function toggleFile(fileId: number) {
     setSelectedFiles((prev) => {
@@ -77,18 +65,15 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
     });
   }
 
-  function togglePage(pageUrl: string) {
-    setSelectedPages((prev) => {
+  function toggleLink(url: string) {
+    setSelectedLinks((prev) => {
       const next = new Set(prev);
-      if (next.has(pageUrl)) next.delete(pageUrl);
-      else next.add(pageUrl);
+      if (next.has(url)) next.delete(url);
+      else next.add(url);
       return next;
     });
   }
 
-<<<<<<< Updated upstream
-  const totalSelected = selectedFiles.size + selectedPages.size;
-=======
   function toggleUpload(id: string) {
     setSelectedUploads((prev) => {
       const next = new Set(prev);
@@ -134,7 +119,6 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
   }
 
   const totalSelected = selectedFiles.size + selectedLinks.size + selectedUploads.size;
->>>>>>> Stashed changes
 
   function startStudying() {
     if (totalSelected === 0) return;
@@ -142,8 +126,8 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
     if (selectedFiles.size > 0) {
       params.set("files", Array.from(selectedFiles).join(","));
     }
-    if (selectedPages.size > 0) {
-      params.set("pages", Array.from(selectedPages).join(","));
+    if (selectedLinks.size > 0) {
+      params.set("links", Array.from(selectedLinks).join(","));
     }
     if (selectedUploads.size > 0) {
       params.set("uploads", Array.from(selectedUploads).join(","));
@@ -151,28 +135,6 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
     router.push(`/course/${courseId}/study?${params.toString()}`);
   }
 
-<<<<<<< Updated upstream
-  const topics = [
-    ...files.map((f) => ({
-      type: "file" as const,
-      id: f.id,
-      url: "",
-      label: f.display_name,
-    })),
-    ...pages.map((p) => ({
-      type: "page" as const,
-      id: 0,
-      url: p.url,
-      label: p.title,
-    })),
-  ];
-
-  const filtered = topics.filter((t) =>
-    t.label.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const hasContent = topics.length > 0;
-=======
   const lowerSearch = search.toLowerCase();
   const filteredFiles = search
     ? files.filter((f) => f.display_name.toLowerCase().includes(lowerSearch))
@@ -181,7 +143,6 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
     ? externalLinks.filter((l) => l.title.toLowerCase().includes(lowerSearch))
     : externalLinks;
   const hasContent = files.length > 0 || externalLinks.length > 0;
->>>>>>> Stashed changes
 
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
@@ -216,36 +177,6 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
         </div>
       </div>
 
-<<<<<<< Updated upstream
-      {/* Topic list */}
-      <div className="space-y-3">
-        {filtered.map((topic) => {
-          const isSelected =
-            topic.type === "file"
-              ? selectedFiles.has(topic.id)
-              : selectedPages.has(topic.url);
-
-          return (
-            <button
-              key={topic.type === "file" ? topic.id : topic.url}
-              onClick={() =>
-                topic.type === "file"
-                  ? toggleFile(topic.id)
-                  : togglePage(topic.url)
-              }
-              style={{ fontFamily: "var(--font-josefin-sans)" }}
-              className={`w-full rounded-2xl border px-6 py-4 text-left text-base font-medium transition ${
-                isSelected
-                  ? "border-[#DCD8FF] bg-[#DCD8FF]/40 text-gray-800"
-                  : "border-gray-100 bg-white text-gray-700 shadow-sm hover:border-[#DCD8FF]/50 hover:shadow-md"
-              }`}
-            >
-              {topic.label}
-            </button>
-          );
-        })}
-      </div>
-=======
       {/* Course files (from Canvas) */}
       {filteredFiles.length > 0 && (
         <div className="mb-6">
@@ -312,7 +243,6 @@ export function ContentPicker({ courseId, courseCode, files, externalLinks }: Pr
           </div>
         </div>
       )}
->>>>>>> Stashed changes
 
       {!hasContent && (
         <p className="py-8 text-center text-gray-400">

@@ -9,12 +9,8 @@ import { getUploads } from "~/server/upload-store";
 export async function generateQuestions(
   courseId: number,
   fileIds: number[],
-<<<<<<< Updated upstream
-  pageUrls: string[],
-=======
   linkUrls: string[],
   uploadIds: string[] = [],
->>>>>>> Stashed changes
 ): Promise<{ questions: StudyQuestion[]; error?: string }> {
   try {
     const session = await getSession();
@@ -30,7 +26,9 @@ export async function generateQuestions(
       session.canvasToken,
       courseId,
       fileIds,
-      pageUrls,
+      [],
+      [],
+      linkUrls,
     );
     const uploadContent = uploadIds.length > 0 ? getUploads(uploadIds) : "";
     const content = [canvasContent, uploadContent].filter(Boolean).join("\n\n---\n\n");
