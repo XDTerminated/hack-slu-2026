@@ -272,7 +272,7 @@ export async function getCourseLeaderboard(
     .from(studySessions)
     .leftJoin(users, eq(studySessions.canvasUserId, users.canvasUserId))
     .where(eq(studySessions.courseId, courseId))
-    .groupBy(studySessions.canvasUserId, users.name)
+    .groupBy(studySessions.canvasUserId, users.name, users.anonymous)
     .orderBy(sql`COALESCE(SUM(${studySessions.score}), 0) DESC`);
 
   const entries: LeaderboardEntry[] = rows.map((r) => {

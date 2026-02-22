@@ -42,7 +42,7 @@ Only return IDs from the provided list.`,
   return parsed.ids ?? courses.map((c) => c.id);
 }
 
-export type FriendlyName = { short: string; full: string };
+export type FriendlyName = { short: string; full: string; academic: boolean };
 
 // Cache friendly names so we don't call AI on every page load
 const nameCache = new Map<
@@ -76,7 +76,7 @@ export async function friendlyCourseNames(
     messages: [
       {
         role: "system",
-        content: `You clean up college course names. For each course, return two things:
+        content: `You clean up college course names and classify them. For each course, return three things:
 1. "short" — a short friendly code like "Comp Sci 2500", "Math 1320", "English 101"
    - Turn abbreviations into readable words (e.g. "CMP_SCI" → "Comp Sci", "MATH" → "Math")
    - Keep the course number
@@ -85,8 +85,12 @@ export async function friendlyCourseNames(
    - Use the course name field to derive this
    - Clean up any junk, formatting, or codes
    - If the name is already clean, keep it as-is
+3. "academic" — true if this is an actual academic course, false if it is NOT
+   - Mark as false: orientation courses, campus guides, civic exams, institutional requirements, student success seminars, library tutorials, campus life courses, university 101, first-year experience, welcome/intro to the university, and similar filler/non-academic courses
+   - Mark as true: any real subject-matter course (math, science, english, history, engineering, business, art, music, etc.)
+   - When in doubt, mark as true
 
-Return JSON: { "courses": { "123": { "short": "Comp Sci 2500", "full": "Intro to Computer Science" } } }
+Return JSON: { "courses": { "123": { "short": "Comp Sci 2500", "full": "Intro to Computer Science", "academic": true } } }
 Keys are course IDs as strings.`,
       },
       {
@@ -98,7 +102,10 @@ Keys are course IDs as strings.`,
 
   const text = response.choices[0]?.message?.content ?? "{}";
   const parsed = JSON.parse(text) as {
-    courses?: Record<string, { short?: string; full?: string }>;
+    courses?: Record<
+      string,
+      { short?: string; full?: string; academic?: boolean }
+    >;
   };
 
   const result: Record<number, FriendlyName> = {};
@@ -108,6 +115,7 @@ Keys are course IDs as strings.`,
       result[parseInt(id, 10)] = {
         short: val.short ?? orig?.course_code ?? "",
         full: val.full ?? orig?.name ?? "",
+        academic: val.academic !== false,
       };
     }
   }
