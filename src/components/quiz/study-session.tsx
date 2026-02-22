@@ -207,6 +207,24 @@ export function StudySession({
             Failed to save session: {saveError}
           </p>
         )}
+        <div className="mt-8 flex justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setFinished(false);
+              setCurrentIndex(0);
+              setSelectedAnswer(null);
+              setShowExplanation(false);
+              setScore(0);
+              savedRef.current = false;
+              startTimeRef.current = Date.now();
+            }}
+            className="cursor-pointer rounded-full bg-[#7E6FAE] px-8 py-3 text-lg font-semibold text-white shadow-md transition-all hover:bg-[#6B5D9A] hover:shadow-lg active:scale-[0.98]"
+            style={{ fontFamily: "var(--font-josefin-sans)" }}
+          >
+            Retry Quiz
+          </button>
+        </div>
       </div>
     );
   }
