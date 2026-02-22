@@ -1,44 +1,108 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { generateQuestions } from "~/app/course/[courseId]/study/actions";
+import { recordStudySession } from "~/server/stats";
 import type { StudyQuestion } from "~/server/ai";
 import { Spinner } from "~/components/ui/spinner";
+import { saveQuizState, clearQuizState, type SavedQuizState } from "~/utils/quiz-state";
 
 type Props = {
   courseId: number;
+  courseName: string;
+  studyUrl: string;
   fileIds: number[];
+  pageUrls: string[];
   linkUrls: string[];
+  assignmentIds: number[];
+  includeSyllabus: boolean;
   uploadIds: string[];
+  resumeState?: SavedQuizState;
 };
 
-export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) {
-  const [questions, setQuestions] = useState<StudyQuestion[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+export function StudySession({
+  courseId,
+  courseName,
+  studyUrl,
+  fileIds,
+  pageUrls,
+  linkUrls,
+  assignmentIds,
+  includeSyllabus,
+  uploadIds,
+  resumeState,
+}: Props) {
+  const [questions, setQuestions] = useState<StudyQuestion[]>(resumeState?.questions ?? []);
+  const [currentIndex, setCurrentIndex] = useState(resumeState?.currentIndex ?? 0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [score, setScore] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [score, setScore] = useState(resumeState?.score ?? 0);
+  const [loading, setLoading] = useState(!resumeState);
   const [error, setError] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
+  const startTimeRef = useRef<number>(resumeState?.startTime ?? Date.now());
+  const savedRef = useRef(false);
 
   useEffect(() => {
+    if (resumeState) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const result = await generateQuestions(courseId, fileIds, linkUrls, uploadIds);
+      const result = await generateQuestions(
+        courseId,
+        fileIds,
+        pageUrls,
+        linkUrls,
+        assignmentIds,
+        includeSyllabus,
+        uploadIds,
+      );
       if (cancelled) return;
       if (result.error) {
         setError(result.error);
       } else {
         setQuestions(result.questions);
+        startTimeRef.current = Date.now();
       }
       setLoading(false);
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Persist quiz state to localStorage on every change
+  useEffect(() => {
+    if (questions.length === 0 || finished) return;
+    saveQuizState({
+      courseId,
+      courseName,
+      questions,
+      currentIndex,
+      score,
+      startTime: startTimeRef.current,
+      studyUrl,
+    });
+  }, [courseId, courseName, studyUrl, questions, currentIndex, score, finished]);
+
+  // Save session to DB and clear localStorage when quiz finishes
+  useEffect(() => {
+    if (finished && !savedRef.current && questions.length > 0) {
+      savedRef.current = true;
+      clearQuizState();
+      const durationSeconds = Math.round(
+        (Date.now() - startTimeRef.current) / 1000,
+      );
+      void recordStudySession(
+        courseId,
+        score,
+        questions.length,
+        durationSeconds,
+      );
+    }
+  }, [finished, courseId, score, questions.length]);
 
   function handleAnswer(index: number) {
     if (selectedAnswer !== null) return;
@@ -123,7 +187,7 @@ export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) 
     <div className="relative">
       {/* Question counter — fixed top right of page */}
       <span
-        className="fixed right-10 top-8 text-6xl font-bold text-[#DCD8FF]"
+        className="fixed top-8 right-10 text-6xl font-bold text-[#DCD8FF]"
         style={{ fontFamily: "var(--font-average-sans)" }}
       >
         {currentIndex + 1}/{questions.length}
@@ -147,7 +211,8 @@ export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) 
 
           if (selectedAnswer !== null) {
             if (i === question.correctIndex) {
-              classes += " bg-green-100 border-2 border-green-400 text-green-800";
+              classes +=
+                " bg-green-100 border-2 border-green-400 text-green-800";
             } else if (i === selectedAnswer) {
               classes += " bg-red-100 border-2 border-red-400 text-red-800";
             } else {
@@ -197,7 +262,7 @@ export function StudySession({ courseId, fileIds, linkUrls, uploadIds }: Props) 
 
       {/* Next button — fixed at bottom */}
       {selectedAnswer !== null && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pb-6 pt-4">
+        <div className="fixed right-0 bottom-0 left-0 z-50 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent px-10 pt-4 pb-6">
           <button
             onClick={nextQuestion}
             className="mx-auto block w-full max-w-2xl cursor-pointer rounded-full bg-[#B8B0E0] py-4 text-lg font-medium text-white shadow-lg transition hover:bg-[#A89BD0] active:bg-[#9889C0]"

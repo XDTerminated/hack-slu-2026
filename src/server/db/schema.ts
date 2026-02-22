@@ -1,26 +1,28 @@
-// Example model schema from the Drizzle docs
-// https://orm.drizzle.team/docs/sql-schema-declaration
-
 import { index, pgTableCreator } from "drizzle-orm/pg-core";
 
 /**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
+ * Multi-project schema: all tables prefixed with "hack-slu_"
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
 export const createTable = pgTableCreator((name) => `hack-slu_${name}`);
 
-export const posts = createTable(
-  "post",
+/** Each completed quiz session */
+export const studySessions = createTable(
+  "study_session",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: d.varchar({ length: 256 }),
-    createdAt: d
+    canvasUserId: d.integer().notNull(),
+    courseId: d.integer().notNull(),
+    score: d.integer().notNull(),
+    totalQuestions: d.integer().notNull(),
+    durationSeconds: d.integer().notNull(),
+    completedAt: d
       .timestamp({ withTimezone: true })
-      .$defaultFn(() => /* @__PURE__ */ new Date())
+      .$defaultFn(() => new Date())
       .notNull(),
-    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
-  (t) => [index("name_idx").on(t.name)],
+  (t) => [
+    index("study_session_user_idx").on(t.canvasUserId),
+    index("study_session_completed_idx").on(t.canvasUserId, t.completedAt),
+  ],
 );

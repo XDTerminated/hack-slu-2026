@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "~/server/session";
-import { getCourses } from "~/server/canvas";
+import { getCourses, getSelf } from "~/server/canvas";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
@@ -12,14 +12,20 @@ async function loginAction(formData: FormData) {
   const token = formData.get("token") as string;
   if (!token?.trim()) return;
 
+  let userId: number;
   try {
-    await getCourses(token.trim());
+    const [, self] = await Promise.all([
+      getCourses(token.trim()),
+      getSelf(token.trim()),
+    ]);
+    userId = self.id;
   } catch {
     redirect("/login?error=invalid");
   }
 
   const session = await getSession();
   session.canvasToken = token.trim();
+  session.canvasUserId = userId;
   await session.save();
   redirect("/dashboard");
 }

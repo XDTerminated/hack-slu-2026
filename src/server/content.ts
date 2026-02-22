@@ -3,7 +3,7 @@ const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
 import { parseOffice } from "officeparser";
-import { getFile, downloadFile, getPage, getAssignment } from "./canvas";
+import { getFile, downloadFile, getPage, getAssignment, getCourseSyllabus } from "./canvas";
 import { htmlToText } from "~/utils/html-to-text";
 import {
   extractLinks,
@@ -18,6 +18,7 @@ export async function fetchSelectedContent(
   pageUrls: string[],
   assignmentIds: number[] = [],
   linkUrls: string[] = [],
+  includeSyllabus = false,
 ): Promise<string> {
   const results = await Promise.all([
     ...fileIds.map((id) => extractFileById(token, id)),
@@ -26,6 +27,7 @@ export async function fetchSelectedContent(
       extractAssignmentWithLinks(token, courseId, id),
     ),
     ...linkUrls.map((url) => extractFromExternalLink(url)),
+    ...(includeSyllabus ? [extractSyllabus(token, courseId)] : []),
   ]);
 
   return results
@@ -99,6 +101,22 @@ async function extractAssignmentWithLinks(
     return [assignmentText, ...linkTexts.filter(Boolean)];
   } catch {
     return [];
+  }
+}
+
+// --- Syllabus extraction ---
+
+async function extractSyllabus(
+  token: string,
+  courseId: number,
+): Promise<string> {
+  try {
+    const body = await getCourseSyllabus(token, courseId);
+    if (!body) return "";
+    const text = htmlToText(body);
+    return text ? `## Course Syllabus\n\n${text}` : "";
+  } catch {
+    return "";
   }
 }
 
