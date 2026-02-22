@@ -3,7 +3,13 @@ const pdfParse = require("pdf-parse/lib/pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
 import { parseOffice } from "officeparser";
-import { getFile, downloadFile, getPage, getAssignment, getCourseSyllabus } from "./canvas";
+import {
+  getFile,
+  downloadFile,
+  getPage,
+  getAssignment,
+  getCourseSyllabus,
+} from "./canvas";
 import { htmlToText } from "~/utils/html-to-text";
 import {
   extractLinks,
@@ -31,18 +37,12 @@ export async function fetchSelectedContent(
     ...(includeSyllabus ? [extractSyllabus(token, courseId)] : []),
   ]);
 
-  return results
-    .flat()
-    .filter(Boolean)
-    .join("\n\n---\n\n");
+  return results.flat().filter(Boolean).join("\n\n---\n\n");
 }
 
 // --- Canvas file extraction ---
 
-async function extractFileById(
-  token: string,
-  fileId: number,
-): Promise<string> {
+async function extractFileById(token: string, fileId: number): Promise<string> {
   try {
     const file = await getFile(token, fileId);
     return await extractFromContentType(
@@ -76,10 +76,12 @@ async function extractPageWithLinks(
 
     // Follow internal Canvas page links (one level deep)
     const canvasSlugs = extractCanvasPageSlugs(page.body, courseId)
-      .filter((slug) => slug !== pageUrl)
+      .filter(({ slug }) => slug !== pageUrl)
       .slice(0, 20);
     const canvasTexts = await Promise.all(
-      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+      canvasSlugs.map(({ slug }) =>
+        extractCanvasSubPage(token, courseId, slug),
+      ),
     );
 
     return [
@@ -146,7 +148,9 @@ async function extractAssignmentWithLinks(
       courseId,
     ).slice(0, 20);
     const canvasTexts = await Promise.all(
-      canvasSlugs.map((slug) => extractCanvasSubPage(token, courseId, slug)),
+      canvasSlugs.map(({ slug }) =>
+        extractCanvasSubPage(token, courseId, slug),
+      ),
     );
 
     return [
@@ -154,31 +158,6 @@ async function extractAssignmentWithLinks(
       ...linkTexts.filter(Boolean),
       ...canvasTexts.filter(Boolean),
     ];
-  } catch {
-    return [];
-  }
-}
-
-// --- Assignment extraction + follow embedded links ---
-
-async function extractAssignmentWithLinks(
-  token: string,
-  courseId: number,
-  assignmentId: number,
-): Promise<string[]> {
-  try {
-    const assignment = await getAssignment(token, courseId, assignmentId);
-    if (!assignment.description) return [];
-
-    const text = htmlToText(assignment.description);
-    const assignmentText = `## ${assignment.name}\n\n${text}`;
-
-    const links = extractLinks(assignment.description);
-    const linkTexts = await Promise.all(
-      links.map((link) => extractFromExternalLink(link)),
-    );
-
-    return [assignmentText, ...linkTexts.filter(Boolean)];
   } catch {
     return [];
   }

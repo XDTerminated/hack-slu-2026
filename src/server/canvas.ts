@@ -193,13 +193,6 @@ export async function getCoursePages(
   );
 }
 
-export async function getFrontPage(
-  token: string,
-  courseId: number,
-): Promise<Page> {
-  return canvasFetch<Page>(token, `/api/v1/courses/${courseId}/front_page`);
-}
-
 export async function getCourseSyllabus(
   token: string,
   courseId: number,
